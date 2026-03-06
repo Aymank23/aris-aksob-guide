@@ -14,7 +14,242 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_users: {
+        Row: {
+          created_at: string
+          department: string | null
+          full_name: string
+          must_change_password: boolean
+          password_hash: string
+          role: string
+          status: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          full_name: string
+          must_change_password?: boolean
+          password_hash: string
+          role: string
+          status?: string
+          user_id?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          full_name?: string
+          must_change_password?: boolean
+          password_hash?: string
+          role?: string
+          status?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          target_record: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_record?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_record?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      follow_ups: {
+        Row: {
+          case_id: string
+          created_at: string
+          date: string
+          followup_id: string
+          progress_notes: string | null
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          date: string
+          followup_id?: string
+          progress_notes?: string | null
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          date?: string
+          followup_id?: string
+          progress_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_ups_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "risk_cases"
+            referencedColumns: ["case_id"]
+          },
+        ]
+      }
+      intervention_forms: {
+        Row: {
+          advisor_notes: string | null
+          case_id: string
+          course_strategy: string[] | null
+          created_at: string
+          id: string
+          monitoring_requirements: string[] | null
+          root_cause_academic: string[] | null
+          root_cause_engagement: string[] | null
+          root_cause_external: string[] | null
+          support_services: string[] | null
+        }
+        Insert: {
+          advisor_notes?: string | null
+          case_id: string
+          course_strategy?: string[] | null
+          created_at?: string
+          id?: string
+          monitoring_requirements?: string[] | null
+          root_cause_academic?: string[] | null
+          root_cause_engagement?: string[] | null
+          root_cause_external?: string[] | null
+          support_services?: string[] | null
+        }
+        Update: {
+          advisor_notes?: string | null
+          case_id?: string
+          course_strategy?: string[] | null
+          created_at?: string
+          id?: string
+          monitoring_requirements?: string[] | null
+          root_cause_academic?: string[] | null
+          root_cause_engagement?: string[] | null
+          root_cause_external?: string[] | null
+          support_services?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intervention_forms_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: true
+            referencedRelation: "risk_cases"
+            referencedColumns: ["case_id"]
+          },
+        ]
+      }
+      outcomes: {
+        Row: {
+          case_id: string
+          cgpa_change: number | null
+          created_at: string
+          final_outcome: string
+          id: string
+          probation_avoided: boolean | null
+          withdrawal_status: boolean | null
+        }
+        Insert: {
+          case_id: string
+          cgpa_change?: number | null
+          created_at?: string
+          final_outcome: string
+          id?: string
+          probation_avoided?: boolean | null
+          withdrawal_status?: boolean | null
+        }
+        Update: {
+          case_id?: string
+          cgpa_change?: number | null
+          created_at?: string
+          final_outcome?: string
+          id?: string
+          probation_avoided?: boolean | null
+          withdrawal_status?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outcomes_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: true
+            referencedRelation: "risk_cases"
+            referencedColumns: ["case_id"]
+          },
+        ]
+      }
+      risk_cases: {
+        Row: {
+          aip_status: string
+          assigned_advisor: string | null
+          assigned_advisor_name: string | null
+          case_id: string
+          created_date: string
+          department: string
+          meeting_status: string
+          midterm_review_status: string
+          outcome_status: string
+          risk_category: string
+          student_id: string
+          student_name: string
+          updated_at: string
+        }
+        Insert: {
+          aip_status?: string
+          assigned_advisor?: string | null
+          assigned_advisor_name?: string | null
+          case_id?: string
+          created_date?: string
+          department: string
+          meeting_status?: string
+          midterm_review_status?: string
+          outcome_status?: string
+          risk_category: string
+          student_id: string
+          student_name: string
+          updated_at?: string
+        }
+        Update: {
+          aip_status?: string
+          assigned_advisor?: string | null
+          assigned_advisor_name?: string | null
+          case_id?: string
+          created_date?: string
+          department?: string
+          meeting_status?: string
+          midterm_review_status?: string
+          outcome_status?: string
+          risk_category?: string
+          student_id?: string
+          student_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_cases_assigned_advisor_fkey"
+            columns: ["assigned_advisor"]
+            isOneToOne: false
+            referencedRelation: "app_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
