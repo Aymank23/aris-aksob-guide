@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { Search, Download, Eye, UserPlus } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Search, Download, Eye, UserPlus, Plus, Pencil } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
+import CreateCaseDialog from '@/components/CreateCaseDialog';
 
 interface RiskCase {
   case_id: string;
@@ -49,6 +50,7 @@ const CasesPage = () => {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedCase, setSelectedCase] = useState<string | null>(null);
   const [selectedAdvisor, setSelectedAdvisor] = useState('');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   useEffect(() => {
     loadCases();
@@ -143,10 +145,18 @@ const CasesPage = () => {
             <h1 className="text-2xl font-serif font-semibold text-foreground">Intervention Cases</h1>
             <p className="text-sm text-muted-foreground mt-1">Manage and track all academic risk intervention cases</p>
           </div>
-          <Button variant="outline" size="sm" onClick={exportCSV}>
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
+          <div className="flex gap-2">
+            {(user?.role === 'admin' || user?.role === 'department_chair') && (
+              <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Intervention Case
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={exportCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -230,9 +240,14 @@ const CasesPage = () => {
                       <TableCell>{statusBadge(c.outcome_status)}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/cases/${c.case_id}`)}>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/cases/${c.case_id}`)} title="View">
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
+                          {(user?.role === 'advisor' && c.assigned_advisor === user.id) && (
+                            <Button variant="ghost" size="sm" onClick={() => navigate(`/cases/${c.case_id}`)} title="Edit">
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                           {(user?.role === 'admin' || user?.role === 'department_chair') && !c.assigned_advisor && (
                             <Button
                               variant="ghost"
@@ -255,6 +270,7 @@ const CasesPage = () => {
           </CardContent>
         </Card>
 
+        {/* Assign Advisor Dialog */}
         {/* Assign Advisor Dialog */}
         <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
           <DialogContent>
@@ -281,6 +297,13 @@ const CasesPage = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Create Case Dialog */}
+        <CreateCaseDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          onCreated={() => { loadCases(); loadAdvisors(); }}
+        />
       </div>
     </AppLayout>
   );

@@ -139,8 +139,14 @@ const CaseDetailPage = () => {
   const supportActivities = ['Tutoring', 'Writing Center', 'Counseling referral', 'Learning support'];
   const monitoringReqs = ['Bi-weekly advisor check-in', 'Midterm grade review'];
 
-  const canEditForm = user?.role === 'advisor' && caseData.assigned_advisor === user.id;
+  const canEditForm = (user?.role === 'advisor' && caseData.assigned_advisor === user.id) || user?.role === 'admin' || user?.role === 'department_chair';
   const canRecordOutcome = user?.role === 'admin';
+
+  const updateMidtermReview = async () => {
+    await supabase.from('risk_cases').update({ midterm_review_status: 'completed' }).eq('case_id', caseId);
+    toast.success('Midterm review marked as completed.');
+    loadCaseData();
+  };
 
   return (
     <AppLayout>
@@ -304,27 +310,51 @@ const CaseDetailPage = () => {
           </CardContent>
         </Card>
 
+        {/* Midterm Review */}
+        <Card>
+          <CardHeader><CardTitle className="text-base font-sans">Midterm Review</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <Badge variant={caseData.midterm_review_status === 'completed' ? 'default' : 'secondary'}>
+                {caseData.midterm_review_status === 'completed' ? 'Completed' : 'Pending'}
+              </Badge>
+              {canEditForm && caseData.midterm_review_status !== 'completed' && caseData.aip_status === 'completed' && (
+                <Button size="sm" onClick={updateMidtermReview}>Mark Midterm Review as Completed</Button>
+              )}
+              {caseData.aip_status !== 'completed' && caseData.midterm_review_status !== 'completed' && (
+                <span className="text-xs text-muted-foreground">AIP must be completed first</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* SECTION E: Follow-Up Tracking */}
         <Card>
-          <CardHeader><CardTitle className="text-base font-sans">Section E — Follow-Up Tracking</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base font-sans">Section E — Follow-Up Timeline</CardTitle></CardHeader>
           <CardContent className="space-y-4">
+            {followUps.length === 0 && (
+              <p className="text-sm text-muted-foreground">No follow-up entries yet.</p>
+            )}
             {followUps.map((f) => (
-              <div key={f.followup_id} className="p-3 rounded-md bg-muted text-sm">
+              <div key={f.followup_id} className="p-3 rounded-md bg-muted text-sm border-l-2 border-primary">
                 <p className="font-medium text-xs text-muted-foreground">{new Date(f.date).toLocaleDateString()}</p>
                 <p className="mt-1">{f.progress_notes}</p>
               </div>
             ))}
             {canEditForm && (
-              <div className="flex gap-3 items-end">
-                <div className="space-y-1">
-                  <Label className="text-xs">Date</Label>
-                  <Input type="date" value={newFollowUp.date} onChange={(e) => setNewFollowUp({ ...newFollowUp, date: e.target.value })} />
+              <div className="space-y-3 pt-2 border-t">
+                <p className="text-xs font-medium text-muted-foreground">Add Follow-Up Entry</p>
+                <div className="flex gap-3 items-end">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Date</Label>
+                    <Input type="date" value={newFollowUp.date} onChange={(e) => setNewFollowUp({ ...newFollowUp, date: e.target.value })} />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Progress Notes</Label>
+                    <Input value={newFollowUp.progress_notes} onChange={(e) => setNewFollowUp({ ...newFollowUp, progress_notes: e.target.value })} placeholder="Progress notes..." />
+                  </div>
+                  <Button size="sm" onClick={addFollowUp}><Plus className="h-4 w-4 mr-1" /> Add</Button>
                 </div>
-                <div className="flex-1 space-y-1">
-                  <Label className="text-xs">Notes</Label>
-                  <Input value={newFollowUp.progress_notes} onChange={(e) => setNewFollowUp({ ...newFollowUp, progress_notes: e.target.value })} placeholder="Progress notes..." />
-                </div>
-                <Button size="sm" onClick={addFollowUp}><Plus className="h-4 w-4" /></Button>
               </div>
             )}
           </CardContent>
