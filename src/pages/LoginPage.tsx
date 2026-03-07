@@ -9,7 +9,8 @@ import aksobLogo from '@/assets/aksob-logo.png';
 import { Shield } from 'lucide-react';
 
 const LoginPage = () => {
-  const { login } = useAuth();
+  const { user, login } = useAuth();
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
