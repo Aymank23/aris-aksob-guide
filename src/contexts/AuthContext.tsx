@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         id: data.user_id,
         username: data.username,
         full_name: data.full_name,
-        role: data.role,
+        role: data.role as UserRole,
         department: data.department,
         must_change_password: data.must_change_password,
       };
