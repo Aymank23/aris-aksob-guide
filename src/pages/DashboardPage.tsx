@@ -87,7 +87,7 @@ const DashboardPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+          <Card data-tour="dept-chart">
             <CardHeader>
               <CardTitle className="text-base font-sans font-medium">Students at Risk by Department</CardTitle>
             </CardHeader>
