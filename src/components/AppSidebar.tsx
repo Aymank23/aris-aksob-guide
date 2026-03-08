@@ -46,7 +46,7 @@ const AppSidebar = () => {
       {/* Logo */}
       <div className="p-4 border-b border-sidebar-border flex items-center gap-3">
         {!collapsed && (
-          <img src={aksobLogo} alt="AKSOB" className="h-8 object-contain brightness-0 invert" />
+          <img src={aksobLogo} alt="AKSOB" className="h-12 object-contain brightness-0 invert" />
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
