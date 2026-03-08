@@ -3,17 +3,14 @@ import AppLayout from '@/components/AppLayout';
 import KpiCard from '@/components/KpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
+import { CHART_COLORS } from '@/lib/constants';
 import { Building2, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-
-const COLORS = ['hsl(160, 63%, 14%)', 'hsl(155, 45%, 28%)', 'hsl(150, 35%, 42%)', 'hsl(148, 25%, 58%)'];
 
 const DepartmentMonitoringPage = () => {
   const [deptStats, setDeptStats] = useState<any[]>([]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     const { data: cases } = await supabase.from('risk_cases').select('*');
@@ -55,15 +52,15 @@ const DepartmentMonitoringPage = () => {
           <CardContent>
             <ResponsiveContainer width="100%" height={320}>
               <BarChart data={deptStats} margin={{ bottom: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(150,10%,88%)" />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-35} textAnchor="end" interval={0} height={60} />
                 <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                 <Tooltip />
                 <Legend wrapperStyle={{ paddingTop: 10 }} />
-                <Bar dataKey="total" name="Total" fill={COLORS[0]} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="assigned" name="Assigned" fill={COLORS[1]} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="completed" name="Completed" fill={COLORS[2]} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="overdue" name="Overdue" fill={COLORS[3]} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="total" name="Total" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="assigned" name="Assigned" fill={CHART_COLORS[1]} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="completed" name="Completed" fill={CHART_COLORS[2]} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="overdue" name="Overdue" fill={CHART_COLORS[3]} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

@@ -3,56 +3,26 @@ import AppLayout from '@/components/AppLayout';
 import KpiCard from '@/components/KpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
+import { CHART_COLORS } from '@/lib/constants';
 import {
-  AlertTriangle,
-  Users,
-  CheckCircle,
-  Clock,
-  FileText,
-  TrendingUp,
-  UserCheck,
-  BookOpen,
-  HeartPulse,
+  AlertTriangle, Users, CheckCircle, Clock,
+  FileText, TrendingUp, UserCheck, BookOpen, HeartPulse,
 } from 'lucide-react';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
-
-const CHART_COLORS = [
-  'hsl(160, 63%, 14%)',
-  'hsl(155, 45%, 28%)',
-  'hsl(150, 35%, 42%)',
-  'hsl(148, 25%, 58%)',
-  'hsl(145, 20%, 72%)',
-];
 
 const DashboardPage = () => {
   const [stats, setStats] = useState({
-    totalFlagged: 0,
-    categoryA: 0,
-    categoryB: 0,
-    advisorsAssigned: 0,
-    meetingsCompleted: 0,
-    aipCompleted: 0,
-    midtermReviews: 0,
-    improved: 0,
-    referralRate: 0,
+    totalFlagged: 0, categoryA: 0, categoryB: 0,
+    advisorsAssigned: 0, meetingsCompleted: 0,
+    aipCompleted: 0, midtermReviews: 0, improved: 0, referralRate: 0,
   });
   const [deptData, setDeptData] = useState<{ name: string; count: number }[]>([]);
   const [statusData, setStatusData] = useState<{ name: string; value: number }[]>([]);
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
+  useEffect(() => { loadDashboardData(); }, []);
 
   const loadDashboardData = async () => {
     const { data: cases } = await supabase.from('risk_cases').select('*');
@@ -69,32 +39,24 @@ const DashboardPage = () => {
     const { data: outcomes } = await supabase.from('outcomes').select('*');
     const improvedCount = outcomes?.filter((o) => o.final_outcome === 'improved_above_threshold').length || 0;
 
+    const pct = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0;
+
     setStats({
-      totalFlagged: total,
-      categoryA: catA,
-      categoryB: catB,
-      advisorsAssigned: total > 0 ? Math.round((assigned / total) * 100) : 0,
-      meetingsCompleted: total > 0 ? Math.round((meetingsDone / total) * 100) : 0,
-      aipCompleted: total > 0 ? Math.round((aipDone / total) * 100) : 0,
-      midtermReviews: total > 0 ? Math.round((midtermDone / total) * 100) : 0,
-      improved: total > 0 ? Math.round((improvedCount / total) * 100) : 0,
-      referralRate: 0,
+      totalFlagged: total, categoryA: catA, categoryB: catB,
+      advisorsAssigned: pct(assigned), meetingsCompleted: pct(meetingsDone),
+      aipCompleted: pct(aipDone), midtermReviews: pct(midtermDone),
+      improved: pct(improvedCount), referralRate: 0,
     });
 
-    // Department distribution
     const deptMap: Record<string, number> = {};
-    cases.forEach((c) => {
-      deptMap[c.department] = (deptMap[c.department] || 0) + 1;
-    });
+    cases.forEach((c) => { deptMap[c.department] = (deptMap[c.department] || 0) + 1; });
     setDeptData(Object.entries(deptMap).map(([name, count]) => ({ name, count })));
 
-    // Status distribution
-    const statusMap: Record<string, number> = {
-      'Pending': cases.filter((c) => !c.assigned_advisor).length,
-      'In Progress': cases.filter((c) => c.assigned_advisor && c.outcome_status !== 'completed').length,
-      'Completed': cases.filter((c) => c.outcome_status === 'completed').length,
-    };
-    setStatusData(Object.entries(statusMap).map(([name, value]) => ({ name, value })));
+    setStatusData([
+      { name: 'Pending', value: cases.filter((c) => !c.assigned_advisor).length },
+      { name: 'In Progress', value: cases.filter((c) => c.assigned_advisor && c.outcome_status !== 'completed').length },
+      { name: 'Completed', value: cases.filter((c) => c.outcome_status === 'completed').length },
+    ]);
   };
 
   return (
@@ -105,7 +67,6 @@ const DashboardPage = () => {
           <p className="text-sm text-muted-foreground mt-1">Real-time academic risk intervention overview</p>
         </div>
 
-        {/* KPI Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <KpiCard title="Total Flagged" value={stats.totalFlagged} icon={AlertTriangle} variant="warning" />
           <KpiCard title="Category A" value={stats.categoryA} subtitle="<45 credits, CGPA ≤2.3" icon={BookOpen} variant="destructive" />
@@ -121,7 +82,6 @@ const DashboardPage = () => {
           <KpiCard title="Referral Rate" value={`${stats.referralRate}%`} icon={HeartPulse} />
         </div>
 
-        {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -130,7 +90,7 @@ const DashboardPage = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={deptData} margin={{ bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(150,10%,88%)" />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-35} textAnchor="end" interval={0} height={60} />
                   <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                   <Tooltip />
@@ -154,10 +114,7 @@ const DashboardPage = () => {
                     innerRadius={60}
                     outerRadius={90}
                     dataKey="value"
-                    label={({ name, value, cx, x }) => {
-                      const anchor = x > cx ? 'start' : 'end';
-                      return `${name}: ${value}`;
-                    }}
+                    label={({ name, value }) => `${name}: ${value}`}
                     labelLine={{ strokeWidth: 1 }}
                   >
                     {statusData.map((_, index) => (

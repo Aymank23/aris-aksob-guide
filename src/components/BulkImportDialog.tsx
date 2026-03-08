@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/lib/supabase';
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Download } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
 interface BulkImportDialogProps {
@@ -34,7 +34,6 @@ const REQUIRED_COLUMNS = ['student_id', 'student_name', 'department', 'risk_cate
 const VALID_CATEGORIES = ['Category A', 'Category B'];
 
 const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogProps) => {
-  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [importing, setImporting] = useState(false);
@@ -70,24 +69,17 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
         const json = XLSX.utils.sheet_to_json<Record<string, string>>(sheet, { defval: '' });
 
         if (json.length === 0) {
-          toast({ title: 'Empty file', description: 'The uploaded file contains no data rows.', variant: 'destructive' });
+          toast.error('The uploaded file contains no data rows.');
           return;
         }
 
-        // Normalize headers
         const rawHeaders = Object.keys(json[0]);
         const headerMap: Record<string, string> = {};
-        rawHeaders.forEach((h) => {
-          headerMap[normalizeHeader(h)] = h;
-        });
+        rawHeaders.forEach((h) => { headerMap[normalizeHeader(h)] = h; });
 
         const missing = REQUIRED_COLUMNS.filter((c) => !headerMap[c]);
         if (missing.length > 0) {
-          toast({
-            title: 'Missing columns',
-            description: `Required columns not found: ${missing.join(', ')}. Please use the template.`,
-            variant: 'destructive',
-          });
+          toast.error(`Required columns not found: ${missing.join(', ')}. Please use the template.`);
           return;
         }
 
@@ -116,7 +108,7 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
         setRows(parsed);
         setStep('preview');
       } catch {
-        toast({ title: 'Parse error', description: 'Could not read the file. Please use CSV or Excel format.', variant: 'destructive' });
+        toast.error('Could not read the file. Please use CSV or Excel format.');
       }
     };
     reader.readAsArrayBuffer(file);
@@ -129,7 +121,6 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
     if (validRows.length === 0) return;
     setImporting(true);
 
-    // Check for existing students to prevent duplicates
     const studentIds = validRows.map((r) => r.student_id);
     const { data: existing } = await supabase
       .from('risk_cases')
@@ -142,10 +133,7 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
     let failed = 0;
 
     for (const row of validRows) {
-      if (existingSet.has(row.student_id)) {
-        failed++;
-        continue;
-      }
+      if (existingSet.has(row.student_id)) { failed++; continue; }
 
       const { error } = await supabase.from('risk_cases').insert({
         student_id: row.student_id,
@@ -171,7 +159,7 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
 
     if (success > 0) {
       onImported();
-      toast({ title: 'Import complete', description: `${success} case(s) created successfully.` });
+      toast.success(`${success} case(s) created successfully.`);
     }
   };
 
@@ -208,21 +196,13 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
               <Upload className="h-10 w-10 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">Select a CSV or Excel file to import</p>
               <div className="flex gap-2">
-                <Button onClick={() => fileInputRef.current?.click()}>
-                  Choose File
-                </Button>
+                <Button onClick={() => fileInputRef.current?.click()}>Choose File</Button>
                 <Button variant="outline" onClick={downloadTemplate}>
                   <Download className="h-4 w-4 mr-2" />
                   Download Template
                 </Button>
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                className="hidden"
-                onChange={handleFile}
-              />
+              <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={handleFile} />
             </div>
           </div>
         )}

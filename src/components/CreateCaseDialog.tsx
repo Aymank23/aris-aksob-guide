@@ -9,16 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/lib/supabase';
+import { loadAdvisors, type Advisor } from '@/lib/advisors';
+import {
+  departments, academicFactors, externalFactors, engagementFactors,
+  courseStrategies, supportActivities, monitoringReqs,
+} from '@/lib/constants';
 import { toast } from 'sonner';
 import { Save, X } from 'lucide-react';
-
-interface Advisor {
-  advisor_id: string;
-  name: string;
-  department: string;
-  case_count: number;
-  email?: string;
-}
 
 interface CreateCaseDialogProps {
   open: boolean;
@@ -26,20 +23,11 @@ interface CreateCaseDialogProps {
   onCreated: () => void;
 }
 
-const departments = ['Marketing', 'Finance', 'Accounting', 'Management', 'Economics', 'HITM'];
-
-const academicFactors = ['Study skills', 'Time management', 'Quantitative difficulty', 'Writing difficulty', 'Missing prerequisites', 'Test anxiety'];
-const externalFactors = ['Work obligations', 'Family responsibilities', 'Financial stress', 'Health concerns', 'Mental health concerns'];
-const engagementFactors = ['Poor attendance', 'Low participation', 'Missed deadlines', 'Lack of motivation', 'Major mismatch'];
-const courseStrategies = ['Maintain current schedule', 'Reduce course load', 'Withdraw from course(s)', 'Retake course(s) next term', 'Recommended course sequencing adjustments'];
-const supportActivities = ['Tutoring', 'Writing Center sessions', 'Counseling referral (Student Affairs)', 'Learning support / accommodation referral'];
-const monitoringReqs = ['Bi-weekly advisor check-in', 'Midterm grade review required'];
-
 const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogProps) => {
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // Student info (Section A)
+  // Section A
   const [studentId, setStudentId] = useState('');
   const [studentName, setStudentName] = useState('');
   const [termSemester, setTermSemester] = useState('');
@@ -50,13 +38,13 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
   const [phone, setPhone] = useState('');
   const [advisorId, setAdvisorId] = useState('');
 
-  // Academic snapshot (Section B)
+  // Section B
   const [cgpa, setCgpa] = useState('');
   const [credits, setCredits] = useState('');
   const [riskCategory, setRiskCategory] = useState('');
   const [financialAid, setFinancialAid] = useState('');
 
-  // Root cause (Section C)
+  // Section C
   const [rootAcademic, setRootAcademic] = useState<string[]>([]);
   const [rootExternal, setRootExternal] = useState<string[]>([]);
   const [rootEngagement, setRootEngagement] = useState<string[]>([]);
@@ -65,7 +53,7 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
   const [otherEngagement, setOtherEngagement] = useState('');
   const [advisorNotes, setAdvisorNotes] = useState('');
 
-  // AIP (Section D)
+  // Section D
   const [courseStrategy, setCourseStrategy] = useState<string[]>([]);
   const [otherCourseStrategy, setOtherCourseStrategy] = useState('');
   const [supportServices, setSupportServices] = useState<string[]>([]);
@@ -73,24 +61,8 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
   const [monitoring, setMonitoring] = useState<string[]>([]);
 
   useEffect(() => {
-    if (open) loadAdvisors();
+    if (open) loadAdvisors().then(setAdvisors);
   }, [open]);
-
-  const loadAdvisors = async () => {
-    const { data: advData } = await supabase.from('app_users').select('*').eq('role', 'advisor').eq('status', 'active');
-    if (!advData) return;
-    const { data: casesData } = await supabase.from('risk_cases').select('assigned_advisor');
-    const countMap: Record<string, number> = {};
-    casesData?.forEach((c) => {
-      if (c.assigned_advisor) countMap[c.assigned_advisor] = (countMap[c.assigned_advisor] || 0) + 1;
-    });
-    setAdvisors(advData.map((a) => ({
-      advisor_id: a.user_id,
-      name: a.full_name,
-      department: a.department || '',
-      case_count: countMap[a.user_id] || 0,
-    })));
-  };
 
   const toggleList = (list: string[], setList: (v: string[]) => void, value: string) => {
     setList(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
@@ -163,7 +135,6 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
         toast.error('Failed to create case.'); setSaving(false); return;
       }
 
-      // Build arrays with "Other" appended if provided
       const finalAcademic = [...rootAcademic, ...(otherAcademic ? [`Other: ${otherAcademic}`] : [])];
       const finalExternal = [...rootExternal, ...(otherExternal ? [`Other: ${otherExternal}`] : [])];
       const finalEngagement = [...rootEngagement, ...(otherEngagement ? [`Other: ${otherEngagement}`] : [])];
@@ -222,7 +193,7 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
         </DialogHeader>
         <ScrollArea className="max-h-[calc(90vh-8rem)] px-6">
           <div className="space-y-6 pb-6">
-            {/* Section A: Student Information */}
+            {/* Section A */}
             <div>
               <h3 className="text-sm font-semibold text-primary mb-3">Section A — Student Information</h3>
               <div className="grid grid-cols-2 gap-3">
@@ -281,7 +252,7 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
 
             <Separator />
 
-            {/* Section B: Academic Snapshot */}
+            {/* Section B */}
             <div>
               <h3 className="text-sm font-semibold text-primary mb-3">Section B — Academic Snapshot (from Cognos)</h3>
               <div className="grid grid-cols-2 gap-3">
@@ -318,7 +289,7 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
 
             <Separator />
 
-            {/* Section C: Root Cause Assessment */}
+            {/* Section C */}
             <div>
               <h3 className="text-sm font-semibold text-primary mb-3">Section C — Root Cause Assessment</h3>
               <div className="space-y-4">
@@ -352,7 +323,7 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
 
             <Separator />
 
-            {/* Section D: Academic Improvement Plan */}
+            {/* Section D */}
             <div>
               <h3 className="text-sm font-semibold text-primary mb-3">Section D — Academic Improvement Plan</h3>
               <div className="space-y-4">
@@ -379,7 +350,6 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
           </div>
         </ScrollArea>
 
-        {/* Footer */}
         <div className="flex justify-end gap-2 p-4 border-t">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             <X className="h-4 w-4 mr-1" /> Cancel

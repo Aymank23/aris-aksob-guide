@@ -3,18 +3,15 @@ import AppLayout from '@/components/AppLayout';
 import KpiCard from '@/components/KpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
+import { CHART_COLORS } from '@/lib/constants';
 import { TrendingUp, TrendingDown, ArrowRight, XCircle } from 'lucide-react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-
-const COLORS = ['hsl(160, 63%, 14%)', 'hsl(155, 45%, 28%)', 'hsl(150, 35%, 42%)', 'hsl(148, 25%, 58%)'];
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 const OutcomesPage = () => {
-  const [outcomeStats, setOutcomeStats] = useState<any[]>([]);
+  const [outcomeStats, setOutcomeStats] = useState<{ name: string; value: number }[]>([]);
   const [totals, setTotals] = useState({ improved: 0, stillAtRisk: 0, declined: 0, withdrew: 0, total: 0 });
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     const { data: outcomes } = await supabase.from('outcomes').select('*');
@@ -58,7 +55,7 @@ const OutcomesPage = () => {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie data={outcomeStats} cx="50%" cy="50%" innerRadius={70} outerRadius={100} dataKey="value" labelLine={{ strokeWidth: 1 }} label={({ name, value }) => `${name}: ${value}`}>
-                  {outcomeStats.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  {outcomeStats.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                 </Pie>
                 <Tooltip />
               </PieChart>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
+import { CHART_COLORS } from '@/lib/constants';
 import { Users, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -12,14 +13,11 @@ const AdvisorWorkloadPage = () => {
   const [advisors, setAdvisors] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     const { data: users } = await supabase.from('app_users').select('*').eq('role', 'advisor').eq('status', 'active');
     const { data: cases } = await supabase.from('risk_cases').select('*');
-
     if (!users || !cases) return;
 
     const advisorStats = users.map((u) => {
@@ -68,11 +66,11 @@ const AdvisorWorkloadPage = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={chartData} margin={{ bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(150,10%,88%)" />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-35} textAnchor="end" interval={0} height={60} />
                   <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="cases" fill="hsl(160, 63%, 14%)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="cases" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

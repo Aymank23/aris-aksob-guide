@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
-import { Search, Download, Eye, UserPlus, Plus, Pencil, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { loadAdvisors, type Advisor } from '@/lib/advisors';
+import { Search, Download, Eye, UserPlus, Plus, Pencil, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CreateCaseDialog from '@/components/CreateCaseDialog';
 import BulkImportDialog from '@/components/BulkImportDialog';
@@ -47,7 +48,7 @@ const CasesPage = () => {
   const [search, setSearch] = useState('');
   const [filterDept, setFilterDept] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
-  const [advisors, setAdvisors] = useState<{ advisor_id: string; name: string; department: string; case_count: number }[]>([]);
+  const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedCase, setSelectedCase] = useState<string | null>(null);
   const [selectedAdvisor, setSelectedAdvisor] = useState('');
@@ -56,7 +57,7 @@ const CasesPage = () => {
 
   useEffect(() => {
     loadCases();
-    loadAdvisors();
+    refreshAdvisors();
   }, []);
 
   const loadCases = async () => {
@@ -71,25 +72,7 @@ const CasesPage = () => {
     setCases(data || []);
   };
 
-  const loadAdvisors = async () => {
-    const { data: advData } = await supabase.from('app_users').select('*').eq('role', 'advisor').eq('status', 'active');
-    if (!advData) return;
-
-    const { data: casesData } = await supabase.from('risk_cases').select('assigned_advisor');
-    const countMap: Record<string, number> = {};
-    casesData?.forEach((c) => {
-      if (c.assigned_advisor) countMap[c.assigned_advisor] = (countMap[c.assigned_advisor] || 0) + 1;
-    });
-
-    setAdvisors(
-      advData.map((a) => ({
-        advisor_id: a.user_id,
-        name: a.full_name,
-        department: a.department || '',
-        case_count: countMap[a.user_id] || 0,
-      }))
-    );
-  };
+  const refreshAdvisors = () => loadAdvisors().then(setAdvisors);
 
   const assignAdvisor = async () => {
     if (!selectedCase || !selectedAdvisor) return;
@@ -109,7 +92,7 @@ const CasesPage = () => {
     setSelectedCase(null);
     setSelectedAdvisor('');
     loadCases();
-    loadAdvisors();
+    refreshAdvisors();
   };
 
   const filtered = cases.filter((c) => {
@@ -279,7 +262,6 @@ const CasesPage = () => {
         </Card>
 
         {/* Assign Advisor Dialog */}
-        {/* Assign Advisor Dialog */}
         <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
           <DialogContent>
             <DialogHeader>
@@ -306,18 +288,16 @@ const CasesPage = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Create Case Dialog */}
         <CreateCaseDialog
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
-          onCreated={() => { loadCases(); loadAdvisors(); }}
+          onCreated={() => { loadCases(); refreshAdvisors(); }}
         />
 
-        {/* Bulk Import Dialog */}
         <BulkImportDialog
           open={importDialogOpen}
           onOpenChange={setImportDialogOpen}
-          onImported={() => { loadCases(); loadAdvisors(); }}
+          onImported={() => { loadCases(); refreshAdvisors(); }}
         />
       </div>
     </AppLayout>
