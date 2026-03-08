@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { CHART_COLORS } from '@/lib/constants';
 import { Users, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import AdvisorWorkloadTour from '@/components/AdvisorWorkloadTour';
 
 const AdvisorWorkloadPage = () => {
   const [advisors, setAdvisors] = useState<any[]>([]);
@@ -48,12 +49,15 @@ const AdvisorWorkloadPage = () => {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-serif font-semibold text-foreground">Advisor Workload</h1>
-          <p className="text-sm text-muted-foreground mt-1">Monitor advisor assignments and case completion</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-serif font-semibold text-foreground">Advisor Workload</h1>
+            <p className="text-sm text-muted-foreground mt-1">Monitor advisor assignments and case completion</p>
+          </div>
+          <AdvisorWorkloadTour />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div data-tour="workload-kpis" className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <KpiCard title="Assigned Cases" value={totalAssigned} icon={Users} />
           <KpiCard title="Pending Meetings" value={totalPending} icon={Clock} variant="warning" />
           <KpiCard title="Overdue Cases" value={totalOverdue} icon={AlertTriangle} variant="destructive" />
@@ -61,7 +65,7 @@ const AdvisorWorkloadPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+          <Card data-tour="workload-chart">
             <CardHeader><CardTitle className="text-base font-sans font-medium">Workload Distribution</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
@@ -76,7 +80,7 @@ const AdvisorWorkloadPage = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-tour="workload-table">
             <CardHeader><CardTitle className="text-base font-sans font-medium">Advisor Details</CardTitle></CardHeader>
             <CardContent className="p-0">
               <Table>

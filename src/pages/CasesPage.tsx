@@ -15,6 +15,7 @@ import { Search, Download, Eye, UserPlus, Plus, Pencil, Upload } from 'lucide-re
 import { useNavigate } from 'react-router-dom';
 import CreateCaseDialog from '@/components/CreateCaseDialog';
 import BulkImportDialog from '@/components/BulkImportDialog';
+import CasesTour from '@/components/CasesTour';
 
 interface RiskCase {
   case_id: string;
@@ -130,7 +131,8 @@ const CasesPage = () => {
             <h1 className="text-2xl font-serif font-semibold text-foreground">Intervention Cases</h1>
             <p className="text-sm text-muted-foreground mt-1">Manage and track all academic risk intervention cases</p>
           </div>
-          <div className="flex gap-2">
+          <div data-tour="cases-actions" className="flex gap-2">
+            <CasesTour />
             {(user?.role === 'admin' || user?.role === 'department_chair') && (
               <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -151,7 +153,7 @@ const CasesPage = () => {
         </div>
 
         {/* Filters */}
-        <Card>
+        <Card data-tour="cases-filters">
           <CardContent className="p-4">
             <div className="flex gap-4 items-center">
               <div className="relative flex-1 max-w-sm">
@@ -189,7 +191,7 @@ const CasesPage = () => {
         </Card>
 
         {/* Table */}
-        <Card>
+        <Card data-tour="cases-table">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
