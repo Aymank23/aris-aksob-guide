@@ -14,7 +14,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+
 
 const navItems = [
   { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'department_chair'] },
