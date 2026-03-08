@@ -312,6 +312,13 @@ const CasesPage = () => {
           onOpenChange={setCreateDialogOpen}
           onCreated={() => { loadCases(); loadAdvisors(); }}
         />
+
+        {/* Bulk Import Dialog */}
+        <BulkImportDialog
+          open={importDialogOpen}
+          onOpenChange={setImportDialogOpen}
+          onImported={() => { loadCases(); loadAdvisors(); }}
+        />
       </div>
     </AppLayout>
   );
