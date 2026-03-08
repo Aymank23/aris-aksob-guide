@@ -13,7 +13,6 @@ import OutcomesPage from "./pages/OutcomesPage";
 import CompliancePage from "./pages/CompliancePage";
 import UserManagementPage from "./pages/UserManagementPage";
 import GuidePage from "./pages/GuidePage";
-import EmailBriefPage from "./pages/EmailBriefPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,7 +53,6 @@ const App = () => (
             <Route path="/compliance" element={<ProtectedRoute allowedRoles={['admin', 'department_chair']}><CompliancePage /></ProtectedRoute>} />
             <Route path="/user-management" element={<ProtectedRoute allowedRoles={['admin']}><UserManagementPage /></ProtectedRoute>} />
             <Route path="/guide" element={<ProtectedRoute allowedRoles={['admin']}><GuidePage /></ProtectedRoute>} />
-            <Route path="/email-brief" element={<ProtectedRoute allowedRoles={['admin']}><EmailBriefPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
