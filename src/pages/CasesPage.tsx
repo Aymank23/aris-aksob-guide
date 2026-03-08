@@ -52,6 +52,7 @@ const CasesPage = () => {
   const [selectedCase, setSelectedCase] = useState<string | null>(null);
   const [selectedAdvisor, setSelectedAdvisor] = useState('');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   useEffect(() => {
     loadCases();
