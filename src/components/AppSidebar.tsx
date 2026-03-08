@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   UserCog,
   BookOpen,
+  Mail,
   LogOut,
   ChevronLeft,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ const navItems = [
   { title: 'Compliance Tracking', path: '/compliance', icon: ShieldCheck, roles: ['admin', 'department_chair'] },
   { title: 'User Management', path: '/user-management', icon: UserCog, roles: ['admin'] },
   { title: 'Guide', path: '/guide', icon: BookOpen, roles: ['admin'] },
+  { title: 'Email Brief', path: '/email-brief', icon: Mail, roles: ['admin'] },
 ];
 
 const AppSidebar = () => {
