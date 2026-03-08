@@ -20,6 +20,13 @@ interface ImportRow {
   student_name: string;
   department: string;
   risk_category: string;
+  major?: string;
+  student_email?: string;
+  student_phone?: string;
+  cgpa?: string;
+  credits_completed?: string;
+  term_semester?: string;
+  financial_aid?: string;
   error?: string;
 }
 
@@ -89,6 +96,13 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
           const sname = String(row[headerMap['student_name']] || '').trim();
           const dept = String(row[headerMap['department']] || '').trim();
           const cat = String(row[headerMap['risk_category']] || '').trim();
+          const mjr = String(row[headerMap['major']] || '').trim();
+          const semail = String(row[headerMap['student_email']] || '').trim();
+          const sphone = String(row[headerMap['student_phone']] || '').trim();
+          const scgpa = String(row[headerMap['cgpa']] || '').trim();
+          const scredits = String(row[headerMap['credits_completed']] || '').trim();
+          const sterm = String(row[headerMap['term_semester']] || '').trim();
+          const sfaid = String(row[headerMap['financial_aid']] || '').trim();
 
           let error: string | undefined;
           if (!sid) error = 'Missing Student ID';
@@ -96,7 +110,7 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
           else if (!dept) error = 'Missing Department';
           else if (!VALID_CATEGORIES.includes(cat)) error = `Invalid risk category: "${cat}"`;
 
-          return { student_id: sid, student_name: sname, department: dept, risk_category: cat, error };
+          return { student_id: sid, student_name: sname, department: dept, risk_category: cat, major: mjr, student_email: semail, student_phone: sphone, cgpa: scgpa, credits_completed: scredits, term_semester: sterm, financial_aid: sfaid, error };
         });
 
         setRows(parsed);
@@ -138,7 +152,14 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
         student_name: row.student_name,
         department: row.department,
         risk_category: row.risk_category,
-      });
+        major: row.major || null,
+        student_email: row.student_email || null,
+        student_phone: row.student_phone || null,
+        cgpa: row.cgpa ? Number(row.cgpa) : null,
+        credits_completed: row.credits_completed ? Number(row.credits_completed) : null,
+        term_semester: row.term_semester || null,
+        financial_aid: row.financial_aid === 'Applicable' ? 'applicable' : row.financial_aid === 'Not Applicable' ? 'not_applicable' : null,
+      } as any);
 
       if (error) failed++;
       else success++;
@@ -156,9 +177,9 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['student_id', 'student_name', 'department', 'risk_category'],
-      ['202401234', 'Jane Doe', 'Marketing', 'Category A'],
-      ['202405678', 'John Smith', 'Finance', 'Category B'],
+      ['student_id', 'student_name', 'department', 'risk_category', 'major', 'student_email', 'student_phone', 'cgpa', 'credits_completed', 'term_semester', 'financial_aid'],
+      ['202401234', 'Jane Doe', 'Marketing', 'Category A', 'Marketing', 'jane.doe@lau.edu', '+961...', '2.1', '30', 'Spring 2026', 'Not Applicable'],
+      ['202405678', 'John Smith', 'Finance', 'Category B', 'Finance', 'john.smith@lau.edu', '+961...', '1.9', '50', 'Spring 2026', 'Applicable'],
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
