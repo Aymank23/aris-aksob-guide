@@ -163,6 +163,7 @@ export type Database = {
           created_at: string
           final_outcome: string
           id: string
+          other_outcome: string | null
           probation_avoided: boolean | null
           withdrawal_status: boolean | null
         }
@@ -172,6 +173,7 @@ export type Database = {
           created_at?: string
           final_outcome: string
           id?: string
+          other_outcome?: string | null
           probation_avoided?: boolean | null
           withdrawal_status?: boolean | null
         }
@@ -181,6 +183,7 @@ export type Database = {
           created_at?: string
           final_outcome?: string
           id?: string
+          other_outcome?: string | null
           probation_avoided?: boolean | null
           withdrawal_status?: boolean | null
         }
@@ -196,48 +199,75 @@ export type Database = {
       }
       risk_cases: {
         Row: {
+          advisor_email: string | null
           aip_status: string
           assigned_advisor: string | null
           assigned_advisor_name: string | null
           case_id: string
+          cgpa: number | null
           created_date: string
+          credits_completed: number | null
+          date_of_meeting: string | null
           department: string
+          financial_aid: string | null
+          major: string | null
           meeting_status: string
           midterm_review_status: string
           outcome_status: string
           risk_category: string
+          student_email: string | null
           student_id: string
           student_name: string
+          student_phone: string | null
+          term_semester: string | null
           updated_at: string
         }
         Insert: {
+          advisor_email?: string | null
           aip_status?: string
           assigned_advisor?: string | null
           assigned_advisor_name?: string | null
           case_id?: string
+          cgpa?: number | null
           created_date?: string
+          credits_completed?: number | null
+          date_of_meeting?: string | null
           department: string
+          financial_aid?: string | null
+          major?: string | null
           meeting_status?: string
           midterm_review_status?: string
           outcome_status?: string
           risk_category: string
+          student_email?: string | null
           student_id: string
           student_name: string
+          student_phone?: string | null
+          term_semester?: string | null
           updated_at?: string
         }
         Update: {
+          advisor_email?: string | null
           aip_status?: string
           assigned_advisor?: string | null
           assigned_advisor_name?: string | null
           case_id?: string
+          cgpa?: number | null
           created_date?: string
+          credits_completed?: number | null
+          date_of_meeting?: string | null
           department?: string
+          financial_aid?: string | null
+          major?: string | null
           meeting_status?: string
           midterm_review_status?: string
           outcome_status?: string
           risk_category?: string
+          student_email?: string | null
           student_id?: string
           student_name?: string
+          student_phone?: string | null
+          term_semester?: string | null
           updated_at?: string
         }
         Relationships: [
