@@ -104,7 +104,7 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-tour="status-chart">
             <CardHeader>
               <CardTitle className="text-base font-sans font-medium">Case Status Distribution</CardTitle>
             </CardHeader>
