@@ -152,9 +152,13 @@ const DashboardPage = () => {
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
-                    outerRadius={100}
+                    outerRadius={90}
                     dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}`}
+                    label={({ name, value, cx, x }) => {
+                      const anchor = x > cx ? 'start' : 'end';
+                      return `${name}: ${value}`;
+                    }}
+                    labelLine={{ strokeWidth: 1 }}
                   >
                     {statusData.map((_, index) => (
                       <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
