@@ -65,7 +65,7 @@ const AdvisorWorkloadPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+          <Card data-tour="workload-chart">
             <CardHeader><CardTitle className="text-base font-sans font-medium">Workload Distribution</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
