@@ -129,10 +129,10 @@ const DashboardPage = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={deptData}>
+                <BarChart data={deptData} margin={{ bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(150,10%,88%)" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-35} textAnchor="end" interval={0} height={60} />
+                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                   <Tooltip />
                   <Bar dataKey="count" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -152,9 +152,13 @@ const DashboardPage = () => {
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
-                    outerRadius={100}
+                    outerRadius={90}
                     dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}`}
+                    label={({ name, value, cx, x }) => {
+                      const anchor = x > cx ? 'start' : 'end';
+                      return `${name}: ${value}`;
+                    }}
+                    labelLine={{ strokeWidth: 1 }}
                   >
                     {statusData.map((_, index) => (
                       <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />

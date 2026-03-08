@@ -53,13 +53,13 @@ const DepartmentMonitoringPage = () => {
         <Card>
           <CardHeader><CardTitle className="text-base font-sans font-medium">Students at Risk per Department</CardTitle></CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={deptStats}>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={deptStats} margin={{ bottom: 40 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(150,10%,88%)" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-35} textAnchor="end" interval={0} height={60} />
+                <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                 <Tooltip />
-                <Legend />
+                <Legend wrapperStyle={{ paddingTop: 10 }} />
                 <Bar dataKey="total" name="Total" fill={COLORS[0]} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="assigned" name="Assigned" fill={COLORS[1]} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="completed" name="Completed" fill={COLORS[2]} radius={[4, 4, 0, 0]} />
