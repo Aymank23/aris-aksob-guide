@@ -20,6 +20,13 @@ interface ImportRow {
   student_name: string;
   department: string;
   risk_category: string;
+  major?: string;
+  student_email?: string;
+  student_phone?: string;
+  cgpa?: string;
+  credits_completed?: string;
+  term_semester?: string;
+  financial_aid?: string;
   error?: string;
 }
 
