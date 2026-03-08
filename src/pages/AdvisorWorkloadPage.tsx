@@ -49,9 +49,12 @@ const AdvisorWorkloadPage = () => {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-serif font-semibold text-foreground">Advisor Workload</h1>
-          <p className="text-sm text-muted-foreground mt-1">Monitor advisor assignments and case completion</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-serif font-semibold text-foreground">Advisor Workload</h1>
+            <p className="text-sm text-muted-foreground mt-1">Monitor advisor assignments and case completion</p>
+          </div>
+          <AdvisorWorkloadTour />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
