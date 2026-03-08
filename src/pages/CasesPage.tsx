@@ -15,6 +15,7 @@ import { Search, Download, Eye, UserPlus, Plus, Pencil, Upload } from 'lucide-re
 import { useNavigate } from 'react-router-dom';
 import CreateCaseDialog from '@/components/CreateCaseDialog';
 import BulkImportDialog from '@/components/BulkImportDialog';
+import CasesTour from '@/components/CasesTour';
 
 interface RiskCase {
   case_id: string;
