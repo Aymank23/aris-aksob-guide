@@ -48,7 +48,7 @@ const AppSidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () 
           <img src={aksobLogo} alt="AKSOB" className="h-12 object-contain brightness-0 invert" />
         )}
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={onToggle}
           className="ml-auto text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
         >
           <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
