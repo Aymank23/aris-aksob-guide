@@ -11,7 +11,7 @@ const TopBar = () => {
   return (
     <header className="h-14 bg-card border-b border-border flex items-center justify-between px-6">
       <div>
-        <h2 className="text-lg font-bold text-foreground font-sans">
+        <h2 className="text-lg font-bold text-foreground font-serif">
           AKSOB Academic Risk Intervention Dashboard
         </h2>
         <p className="text-sm text-muted-foreground">
