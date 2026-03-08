@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { CHART_COLORS } from '@/lib/constants';
 import { Users, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import AdvisorWorkloadTour from '@/components/AdvisorWorkloadTour';
 
 const AdvisorWorkloadPage = () => {
   const [advisors, setAdvisors] = useState<any[]>([]);
