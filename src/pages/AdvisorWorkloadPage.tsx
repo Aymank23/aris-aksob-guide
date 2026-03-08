@@ -57,7 +57,7 @@ const AdvisorWorkloadPage = () => {
           <AdvisorWorkloadTour />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div data-tour="workload-kpis" className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <KpiCard title="Assigned Cases" value={totalAssigned} icon={Users} />
           <KpiCard title="Pending Meetings" value={totalPending} icon={Clock} variant="warning" />
           <KpiCard title="Overdue Cases" value={totalOverdue} icon={AlertTriangle} variant="destructive" />
