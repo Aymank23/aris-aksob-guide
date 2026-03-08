@@ -132,6 +132,7 @@ const CasesPage = () => {
             <p className="text-sm text-muted-foreground mt-1">Manage and track all academic risk intervention cases</p>
           </div>
           <div className="flex gap-2">
+            <CasesTour />
             {(user?.role === 'admin' || user?.role === 'department_chair') && (
               <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
