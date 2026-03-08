@@ -14,7 +14,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+
 
 const navItems = [
   { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'department_chair'] },
@@ -27,10 +27,9 @@ const navItems = [
   { title: 'Guide', path: '/guide', icon: BookOpen, roles: ['admin'] },
 ];
 
-const AppSidebar = () => {
+const AppSidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
 
   const filteredNav = navItems.filter((item) =>
     item.roles.includes(user?.role || '')
@@ -49,7 +48,7 @@ const AppSidebar = () => {
           <img src={aksobLogo} alt="AKSOB" className="h-12 object-contain brightness-0 invert" />
         )}
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={onToggle}
           className="ml-auto text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors"
         >
           <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
