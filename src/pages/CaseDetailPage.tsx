@@ -176,14 +176,23 @@ const CaseDetailPage = () => {
   return (
     <AppLayout>
       <div className="space-y-6 max-w-4xl">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/cases')}>
-            <ArrowLeft className="h-4 w-4 mr-1" /> Back
-          </Button>
-          <div>
-            <h1 className="text-2xl font-serif font-semibold">Student Academic Risk Intervention Form</h1>
-            <p className="text-sm text-muted-foreground">AKSOB — Confidential Academic Record</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/cases')}>
+              <ArrowLeft className="h-4 w-4 mr-1" /> Back
+            </Button>
+            <div>
+              <h1 className="text-2xl font-serif font-semibold">Student Academic Risk Intervention Form</h1>
+              <p className="text-sm text-muted-foreground">AKSOB — Confidential Academic Record</p>
+            </div>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => generateARIPPdf(caseData, interventionForm ? formData : null, followUps, outcome)}
+          >
+            <FileDown className="h-4 w-4 mr-1" /> Export PDF
+          </Button>
         </div>
 
         {/* SECTION A */}
