@@ -79,7 +79,7 @@ const DashboardPage = () => {
           <KpiCard title="Meetings Done" value={`${stats.meetingsCompleted}%`} icon={CheckCircle} variant="success" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div data-tour="progress-section" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard title="AIP Completed" value={`${stats.aipCompleted}%`} icon={FileText} />
           <KpiCard title="Midterm Reviews" value={`${stats.midtermReviews}%`} icon={Clock} />
           <KpiCard title="Improved" value={`${stats.improved}%`} icon={TrendingUp} variant="success" />
