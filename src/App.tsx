@@ -13,6 +13,7 @@ import OutcomesPage from "./pages/OutcomesPage";
 import CompliancePage from "./pages/CompliancePage";
 import UserManagementPage from "./pages/UserManagementPage";
 import GuidePage from "./pages/GuidePage";
+import EmailBriefPage from "./pages/EmailBriefPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
