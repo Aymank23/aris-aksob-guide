@@ -14,8 +14,9 @@ import {
   academicFactors, externalFactors, engagementFactors,
   courseStrategies, supportActivities, monitoringReqs,
 } from '@/lib/constants';
-import { ArrowLeft, Save, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Plus, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
+import { generateARIPPdf } from '@/lib/generateARIPPdf';
 
 const CaseDetailPage = () => {
   const { caseId } = useParams();
