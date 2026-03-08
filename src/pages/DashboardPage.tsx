@@ -8,6 +8,7 @@ import {
   AlertTriangle, Users, CheckCircle, Clock,
   FileText, TrendingUp, UserCheck, BookOpen, HeartPulse,
 } from 'lucide-react';
+import DashboardTour from '@/components/DashboardTour';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
