@@ -24,6 +24,7 @@ const navItems = [
   { title: 'Outcomes Analytics', path: '/outcomes', icon: TrendingUp, roles: ['admin', 'department_chair'] },
   { title: 'Compliance Tracking', path: '/compliance', icon: ShieldCheck, roles: ['admin', 'department_chair'] },
   { title: 'User Management', path: '/user-management', icon: UserCog, roles: ['admin'] },
+  { title: 'Guide', path: '/guide', icon: BookOpen, roles: ['admin'] },
 ];
 
 const AppSidebar = () => {
