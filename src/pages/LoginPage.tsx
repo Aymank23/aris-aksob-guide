@@ -36,11 +36,11 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-md border-border shadow-lg">
         <CardHeader className="text-center pb-2">
-          <img src={aksobLogo} alt="AKSOB Logo" className="h-16 mx-auto mb-4 object-contain" />
-          <h1 className="font-serif text-xl font-semibold text-foreground">
+          <img src={aksobLogo} alt="AKSOB Logo" className="h-24 mx-auto mb-5 object-contain" />
+          <h1 className="font-serif text-2xl font-bold text-foreground">
             Academic Risk Intervention System
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">AKSOB — Lebanese American University</p>
+          <p className="text-base text-muted-foreground mt-1">AKSOB — Lebanese American University</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
