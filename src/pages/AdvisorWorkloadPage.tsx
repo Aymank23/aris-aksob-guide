@@ -80,7 +80,7 @@ const AdvisorWorkloadPage = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-tour="workload-table">
             <CardHeader><CardTitle className="text-base font-sans font-medium">Advisor Details</CardTitle></CardHeader>
             <CardContent className="p-0">
               <Table>

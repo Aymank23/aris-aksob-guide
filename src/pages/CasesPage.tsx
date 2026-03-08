@@ -191,7 +191,7 @@ const CasesPage = () => {
         </Card>
 
         {/* Table */}
-        <Card>
+        <Card data-tour="cases-table">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
