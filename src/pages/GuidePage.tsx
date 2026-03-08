@@ -230,7 +230,7 @@ const exportGuidePdf = () => {
 
   /* 7 — Usage Notes */
   heading('7. Usage Notes');
-  bullet('The system currently contains demo/mock data for testing purposes. Production data should be imported via the bulk import feature or created individually.');
+  bullet('The system operates on a clean-slate data policy — no mock or seeded data is included. All records are created through manual entry or bulk import of real registrar data.');
   bullet('Cases are created by Admins or Department Chairs. Advisors cannot create cases.');
   bullet('Advisor assignment is performed by Admins or Department Chairs from the case detail page.');
   bullet('Intervention plan details (AIP form) are filled in by the assigned advisor.');

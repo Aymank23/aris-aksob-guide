@@ -38,7 +38,7 @@ export const supportActivities = [
   'Tutoring',
   'Writing Center sessions',
   'Counseling referral (Student Affairs)',
-  'Learning support / accommodation referral',
+  'Learning support / accommodation referral (if applicable)',
 ];
 
 export const monitoringReqs = [
