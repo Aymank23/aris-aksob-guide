@@ -152,7 +152,14 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
         student_name: row.student_name,
         department: row.department,
         risk_category: row.risk_category,
-      });
+        major: row.major || null,
+        student_email: row.student_email || null,
+        student_phone: row.student_phone || null,
+        cgpa: row.cgpa ? Number(row.cgpa) : null,
+        credits_completed: row.credits_completed ? Number(row.credits_completed) : null,
+        term_semester: row.term_semester || null,
+        financial_aid: row.financial_aid === 'Applicable' ? 'applicable' : row.financial_aid === 'Not Applicable' ? 'not_applicable' : null,
+      } as any);
 
       if (error) failed++;
       else success++;
