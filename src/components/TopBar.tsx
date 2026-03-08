@@ -11,10 +11,10 @@ const TopBar = () => {
   return (
     <header className="h-14 bg-card border-b border-border flex items-center justify-between px-6">
       <div>
-        <h2 className="text-sm font-semibold text-foreground font-sans">
+        <h2 className="text-lg font-bold text-foreground font-sans">
           AKSOB Academic Risk Intervention Dashboard
         </h2>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Academic monitoring, intervention management, and student success oversight
         </p>
       </div>
