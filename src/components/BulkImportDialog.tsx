@@ -96,6 +96,13 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
           const sname = String(row[headerMap['student_name']] || '').trim();
           const dept = String(row[headerMap['department']] || '').trim();
           const cat = String(row[headerMap['risk_category']] || '').trim();
+          const mjr = String(row[headerMap['major']] || '').trim();
+          const semail = String(row[headerMap['student_email']] || '').trim();
+          const sphone = String(row[headerMap['student_phone']] || '').trim();
+          const scgpa = String(row[headerMap['cgpa']] || '').trim();
+          const scredits = String(row[headerMap['credits_completed']] || '').trim();
+          const sterm = String(row[headerMap['term_semester']] || '').trim();
+          const sfaid = String(row[headerMap['financial_aid']] || '').trim();
 
           let error: string | undefined;
           if (!sid) error = 'Missing Student ID';
@@ -103,7 +110,7 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
           else if (!dept) error = 'Missing Department';
           else if (!VALID_CATEGORIES.includes(cat)) error = `Invalid risk category: "${cat}"`;
 
-          return { student_id: sid, student_name: sname, department: dept, risk_category: cat, error };
+          return { student_id: sid, student_name: sname, department: dept, risk_category: cat, major: mjr, student_email: semail, student_phone: sphone, cgpa: scgpa, credits_completed: scredits, term_semester: sterm, financial_aid: sfaid, error };
         });
 
         setRows(parsed);
