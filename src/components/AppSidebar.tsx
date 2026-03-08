@@ -9,6 +9,7 @@ import {
   TrendingUp,
   ShieldCheck,
   UserCog,
+  BookOpen,
   LogOut,
   ChevronLeft,
 } from 'lucide-react';
