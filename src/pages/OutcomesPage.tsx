@@ -57,7 +57,7 @@ const OutcomesPage = () => {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie data={outcomeStats} cx="50%" cy="50%" innerRadius={70} outerRadius={110} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                <Pie data={outcomeStats} cx="50%" cy="50%" innerRadius={70} outerRadius={100} dataKey="value" labelLine={{ strokeWidth: 1 }} label={({ name, value }) => `${name}: ${value}`}>
                   {outcomeStats.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip />
