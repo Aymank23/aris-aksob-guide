@@ -12,6 +12,7 @@ import DepartmentMonitoringPage from "./pages/DepartmentMonitoringPage";
 import OutcomesPage from "./pages/OutcomesPage";
 import CompliancePage from "./pages/CompliancePage";
 import UserManagementPage from "./pages/UserManagementPage";
+import GuidePage from "./pages/GuidePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/outcomes" element={<ProtectedRoute allowedRoles={['admin', 'department_chair']}><OutcomesPage /></ProtectedRoute>} />
             <Route path="/compliance" element={<ProtectedRoute allowedRoles={['admin', 'department_chair']}><CompliancePage /></ProtectedRoute>} />
             <Route path="/user-management" element={<ProtectedRoute allowedRoles={['admin']}><UserManagementPage /></ProtectedRoute>} />
+            <Route path="/guide" element={<ProtectedRoute allowedRoles={['admin']}><GuidePage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
