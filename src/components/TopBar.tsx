@@ -1,11 +1,12 @@
-import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { Shield } from 'lucide-react';
 
 const TopBar = () => {
-  const { user } = useAuth();
   const now = new Date();
-  const term = 'Spring 2026';
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-indexed
+  // Derive term from current date: Jan-May = Spring, Jun-Aug = Summer, Sep-Dec = Fall
+  const term = month <= 4 ? `Spring ${year}` : month <= 7 ? `Summer ${year}` : `Fall ${year}`;
 
   return (
     <header className="h-14 bg-card border-b border-border flex items-center justify-between px-6">

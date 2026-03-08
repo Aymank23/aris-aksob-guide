@@ -7,10 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  academicFactors, externalFactors, engagementFactors,
+  courseStrategies, supportActivities, monitoringReqs,
+} from '@/lib/constants';
 import { ArrowLeft, Save, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,7 +28,6 @@ const CaseDetailPage = () => {
   const [newFollowUp, setNewFollowUp] = useState({ date: '', progress_notes: '' });
   const [otherOutcome, setOtherOutcome] = useState('');
 
-  // Intervention form state
   const [formData, setFormData] = useState({
     root_cause_academic: [] as string[],
     root_cause_external: [] as string[],
@@ -138,13 +140,6 @@ const CaseDetailPage = () => {
 
   if (!caseData) return <AppLayout><div className="flex items-center justify-center h-64 text-muted-foreground">Loading...</div></AppLayout>;
 
-  const academicFactors = ['Study skills', 'Time management', 'Quantitative difficulty', 'Writing difficulty', 'Missing prerequisites', 'Test anxiety'];
-  const externalFactors = ['Work obligations', 'Family responsibilities', 'Financial stress', 'Health concerns', 'Mental health concerns'];
-  const engagementFactors = ['Poor attendance', 'Low participation', 'Missed deadlines', 'Lack of motivation', 'Major mismatch'];
-  const courseStrategies = ['Maintain current schedule', 'Reduce course load', 'Withdraw from course(s)', 'Retake course(s) next term', 'Recommended course sequencing adjustments'];
-  const supportActivities = ['Tutoring', 'Writing Center sessions', 'Counseling referral (Student Affairs)', 'Learning support / accommodation referral'];
-  const monitoringReqs = ['Bi-weekly advisor check-in', 'Midterm grade review required'];
-
   const canEditForm = (user?.role === 'advisor' && caseData.assigned_advisor === user.id) || user?.role === 'admin' || user?.role === 'department_chair';
   const canRecordOutcome = user?.role === 'admin';
 
@@ -153,6 +148,29 @@ const CaseDetailPage = () => {
     toast.success('Midterm review marked as completed.');
     loadCaseData();
   };
+
+  const CheckboxList = ({ items, field }: { items: string[]; field: keyof typeof formData }) => (
+    <div className="grid grid-cols-2 gap-2 mt-2">
+      {items.map((f) => (
+        <label key={f} className="flex items-center gap-2 text-sm">
+          <Checkbox
+            checked={(formData[field] as string[]).includes(f)}
+            onCheckedChange={() => toggleCheckbox(field, f)}
+            disabled={!canEditForm}
+          />
+          {f}
+        </label>
+      ))}
+    </div>
+  );
+
+  const OtherItems = ({ field }: { field: keyof typeof formData }) => (
+    <>
+      {(formData[field] as string[]).filter(v => v.startsWith('Other:')).map(v => (
+        <p key={v} className="text-sm text-muted-foreground mt-1 italic">{v}</p>
+      ))}
+    </>
+  );
 
   return (
     <AppLayout>
@@ -167,32 +185,32 @@ const CaseDetailPage = () => {
           </div>
         </div>
 
-        {/* SECTION A: Student Information */}
+        {/* SECTION A */}
         <Card>
           <CardHeader><CardTitle className="text-base font-sans">Section A — Student Information</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div><Label className="text-muted-foreground">Student Name</Label><p className="font-medium">{caseData.student_name}</p></div>
               <div><Label className="text-muted-foreground">Student ID</Label><p className="font-mono">{caseData.student_id}</p></div>
-              <div><Label className="text-muted-foreground">Term / Semester</Label><p>{(caseData as any).term_semester || '—'}</p></div>
-              <div><Label className="text-muted-foreground">Date of Meeting</Label><p>{(caseData as any).date_of_meeting ? new Date((caseData as any).date_of_meeting).toLocaleDateString() : '—'}</p></div>
+              <div><Label className="text-muted-foreground">Term / Semester</Label><p>{caseData.term_semester || '—'}</p></div>
+              <div><Label className="text-muted-foreground">Date of Meeting</Label><p>{caseData.date_of_meeting ? new Date(caseData.date_of_meeting).toLocaleDateString() : '—'}</p></div>
               <div><Label className="text-muted-foreground">Department</Label><p>{caseData.department}</p></div>
-              <div><Label className="text-muted-foreground">Major / Program</Label><p>{(caseData as any).major || '—'}</p></div>
-              <div><Label className="text-muted-foreground">Student Email</Label><p>{(caseData as any).student_email || '—'}</p></div>
-              <div><Label className="text-muted-foreground">Phone Number</Label><p>{(caseData as any).student_phone || '—'}</p></div>
+              <div><Label className="text-muted-foreground">Major / Program</Label><p>{caseData.major || '—'}</p></div>
+              <div><Label className="text-muted-foreground">Student Email</Label><p>{caseData.student_email || '—'}</p></div>
+              <div><Label className="text-muted-foreground">Phone Number</Label><p>{caseData.student_phone || '—'}</p></div>
               <div><Label className="text-muted-foreground">Assigned Special Advisor</Label><p>{caseData.assigned_advisor_name || '—'}</p></div>
-              <div><Label className="text-muted-foreground">Advisor Email</Label><p>{(caseData as any).advisor_email || '—'}</p></div>
+              <div><Label className="text-muted-foreground">Advisor Email</Label><p>{caseData.advisor_email || '—'}</p></div>
             </div>
           </CardContent>
         </Card>
 
-        {/* SECTION B: Academic Snapshot */}
+        {/* SECTION B */}
         <Card>
           <CardHeader><CardTitle className="text-base font-sans">Section B — Academic Snapshot (from Cognos)</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><Label className="text-muted-foreground">CGPA</Label><p>{(caseData as any).cgpa ?? '—'}</p></div>
-              <div><Label className="text-muted-foreground">Credits Completed</Label><p>{(caseData as any).credits_completed ?? '—'}</p></div>
+              <div><Label className="text-muted-foreground">CGPA</Label><p>{caseData.cgpa ?? '—'}</p></div>
+              <div><Label className="text-muted-foreground">Credits Completed</Label><p>{caseData.credits_completed ?? '—'}</p></div>
               <div><Label className="text-muted-foreground">Risk Category</Label>
                 <Badge variant={caseData.risk_category === 'Category A' ? 'destructive' : 'secondary'}>{caseData.risk_category}</Badge>
                 <span className="text-xs text-muted-foreground ml-2">
@@ -200,7 +218,7 @@ const CaseDetailPage = () => {
                 </span>
               </div>
               <div><Label className="text-muted-foreground">Financial Aid</Label>
-                <p>{(caseData as any).financial_aid === 'applicable' ? 'Applicable' : (caseData as any).financial_aid === 'not_applicable' ? 'Not Applicable' : '—'}</p>
+                <p>{caseData.financial_aid === 'applicable' ? 'Applicable' : caseData.financial_aid === 'not_applicable' ? 'Not Applicable' : '—'}</p>
               </div>
             </div>
           </CardContent>
@@ -221,63 +239,24 @@ const CaseDetailPage = () => {
           </CardContent>
         </Card>
 
-        {/* SECTION C: Root Cause Assessment */}
+        {/* SECTION C */}
         <Card>
           <CardHeader><CardTitle className="text-base font-sans">Section C — Root Cause Assessment</CardTitle></CardHeader>
           <CardContent className="space-y-6">
             <div>
               <Label className="text-sm font-medium">1) Academic Factors (check all that apply)</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {academicFactors.map((f) => (
-                  <label key={f} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={formData.root_cause_academic.includes(f)}
-                      onCheckedChange={() => toggleCheckbox('root_cause_academic', f)}
-                      disabled={!canEditForm}
-                    />
-                    {f}
-                  </label>
-                ))}
-              </div>
-              {formData.root_cause_academic.filter(v => v.startsWith('Other:')).map(v => (
-                <p key={v} className="text-sm text-muted-foreground mt-1 italic">{v}</p>
-              ))}
+              <CheckboxList items={academicFactors} field="root_cause_academic" />
+              <OtherItems field="root_cause_academic" />
             </div>
             <div>
               <Label className="text-sm font-medium">2) External / Personal Factors</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {externalFactors.map((f) => (
-                  <label key={f} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={formData.root_cause_external.includes(f)}
-                      onCheckedChange={() => toggleCheckbox('root_cause_external', f)}
-                      disabled={!canEditForm}
-                    />
-                    {f}
-                  </label>
-                ))}
-              </div>
-              {formData.root_cause_external.filter(v => v.startsWith('Other:')).map(v => (
-                <p key={v} className="text-sm text-muted-foreground mt-1 italic">{v}</p>
-              ))}
+              <CheckboxList items={externalFactors} field="root_cause_external" />
+              <OtherItems field="root_cause_external" />
             </div>
             <div>
               <Label className="text-sm font-medium">3) Engagement Factors</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {engagementFactors.map((f) => (
-                  <label key={f} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={formData.root_cause_engagement.includes(f)}
-                      onCheckedChange={() => toggleCheckbox('root_cause_engagement', f)}
-                      disabled={!canEditForm}
-                    />
-                    {f}
-                  </label>
-                ))}
-              </div>
-              {formData.root_cause_engagement.filter(v => v.startsWith('Other:')).map(v => (
-                <p key={v} className="text-sm text-muted-foreground mt-1 italic">{v}</p>
-              ))}
+              <CheckboxList items={engagementFactors} field="root_cause_engagement" />
+              <OtherItems field="root_cause_engagement" />
             </div>
             <div>
               <Label className="text-sm font-medium">Advisor Notes / Summary of Key Causes</Label>
@@ -292,60 +271,23 @@ const CaseDetailPage = () => {
           </CardContent>
         </Card>
 
-        {/* SECTION D: Academic Improvement Plan */}
+        {/* SECTION D */}
         <Card>
           <CardHeader><CardTitle className="text-base font-sans">Section D — Academic Improvement Plan</CardTitle></CardHeader>
           <CardContent className="space-y-6">
             <div>
               <Label className="text-sm font-medium">D1) Course Strategy</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {courseStrategies.map((s) => (
-                  <label key={s} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={formData.course_strategy.includes(s)}
-                      onCheckedChange={() => toggleCheckbox('course_strategy', s)}
-                      disabled={!canEditForm}
-                    />
-                    {s}
-                  </label>
-                ))}
-              </div>
-              {formData.course_strategy.filter(v => v.startsWith('Other:')).map(v => (
-                <p key={v} className="text-sm text-muted-foreground mt-1 italic">{v}</p>
-              ))}
+              <CheckboxList items={courseStrategies} field="course_strategy" />
+              <OtherItems field="course_strategy" />
             </div>
             <div>
               <Label className="text-sm font-medium">D2) Support Activities</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {supportActivities.map((s) => (
-                  <label key={s} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={formData.support_services.includes(s)}
-                      onCheckedChange={() => toggleCheckbox('support_services', s)}
-                      disabled={!canEditForm}
-                    />
-                    {s}
-                  </label>
-                ))}
-              </div>
-              {formData.support_services.filter(v => v.startsWith('Other:')).map(v => (
-                <p key={v} className="text-sm text-muted-foreground mt-1 italic">{v}</p>
-              ))}
+              <CheckboxList items={supportActivities} field="support_services" />
+              <OtherItems field="support_services" />
             </div>
             <div>
               <Label className="text-sm font-medium">D3) Monitoring Requirements</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {monitoringReqs.map((m) => (
-                  <label key={m} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={formData.monitoring_requirements.includes(m)}
-                      onCheckedChange={() => toggleCheckbox('monitoring_requirements', m)}
-                      disabled={!canEditForm}
-                    />
-                    {m}
-                  </label>
-                ))}
-              </div>
+              <CheckboxList items={monitoringReqs} field="monitoring_requirements" />
             </div>
             {canEditForm && (
               <Button onClick={saveInterventionForm}><Save className="h-4 w-4 mr-2" />Save Intervention Plan</Button>
@@ -371,7 +313,7 @@ const CaseDetailPage = () => {
           </CardContent>
         </Card>
 
-        {/* SECTION E: Follow-Up Tracking */}
+        {/* SECTION E */}
         <Card>
           <CardHeader><CardTitle className="text-base font-sans">Section E — Follow-Up Tracking</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -403,7 +345,7 @@ const CaseDetailPage = () => {
           </CardContent>
         </Card>
 
-        {/* SECTION F: Final Outcome (To be Filled by Assistant Deans) */}
+        {/* SECTION F */}
         {canRecordOutcome && (
           <Card>
             <CardHeader><CardTitle className="text-base font-sans">Section F — Final Outcome (To be Filled by Assistant Deans)</CardTitle></CardHeader>
