@@ -226,8 +226,8 @@ const CasesPage = () => {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                      No cases found
+                    <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
+                      No intervention cases available. Cases will appear here once flagged students are added.
                     </TableCell>
                   </TableRow>
                 ) : (
