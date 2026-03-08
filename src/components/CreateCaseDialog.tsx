@@ -17,6 +17,7 @@ interface Advisor {
   name: string;
   department: string;
   case_count: number;
+  email?: string;
 }
 
 interface CreateCaseDialogProps {
@@ -30,38 +31,45 @@ const departments = ['Marketing', 'Finance', 'Accounting', 'Management', 'Econom
 const academicFactors = ['Study skills', 'Time management', 'Quantitative difficulty', 'Writing difficulty', 'Missing prerequisites', 'Test anxiety'];
 const externalFactors = ['Work obligations', 'Family responsibilities', 'Financial stress', 'Health concerns', 'Mental health concerns'];
 const engagementFactors = ['Poor attendance', 'Low participation', 'Missed deadlines', 'Lack of motivation', 'Major mismatch'];
-const courseStrategies = ['Maintain current schedule', 'Reduce course load', 'Withdraw from courses', 'Retake courses', 'Course sequencing adjustments'];
-const supportActivities = ['Tutoring', 'Writing Center', 'Counseling referral', 'Learning support'];
-const monitoringReqs = ['Bi-weekly advisor check-in', 'Midterm grade review'];
+const courseStrategies = ['Maintain current schedule', 'Reduce course load', 'Withdraw from course(s)', 'Retake course(s) next term', 'Recommended course sequencing adjustments'];
+const supportActivities = ['Tutoring', 'Writing Center sessions', 'Counseling referral (Student Affairs)', 'Learning support / accommodation referral'];
+const monitoringReqs = ['Bi-weekly advisor check-in', 'Midterm grade review required'];
 
 const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogProps) => {
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // Student info
+  // Student info (Section A)
   const [studentId, setStudentId] = useState('');
   const [studentName, setStudentName] = useState('');
+  const [termSemester, setTermSemester] = useState('');
+  const [dateOfMeeting, setDateOfMeeting] = useState('');
   const [department, setDepartment] = useState('');
   const [major, setMajor] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [riskCategory, setRiskCategory] = useState('');
   const [advisorId, setAdvisorId] = useState('');
 
-  // Academic snapshot
+  // Academic snapshot (Section B)
   const [cgpa, setCgpa] = useState('');
   const [credits, setCredits] = useState('');
+  const [riskCategory, setRiskCategory] = useState('');
   const [financialAid, setFinancialAid] = useState('');
 
-  // Root cause
+  // Root cause (Section C)
   const [rootAcademic, setRootAcademic] = useState<string[]>([]);
   const [rootExternal, setRootExternal] = useState<string[]>([]);
   const [rootEngagement, setRootEngagement] = useState<string[]>([]);
+  const [otherAcademic, setOtherAcademic] = useState('');
+  const [otherExternal, setOtherExternal] = useState('');
+  const [otherEngagement, setOtherEngagement] = useState('');
   const [advisorNotes, setAdvisorNotes] = useState('');
 
-  // AIP
+  // AIP (Section D)
   const [courseStrategy, setCourseStrategy] = useState<string[]>([]);
+  const [otherCourseStrategy, setOtherCourseStrategy] = useState('');
   const [supportServices, setSupportServices] = useState<string[]>([]);
+  const [otherSupport, setOtherSupport] = useState('');
   const [monitoring, setMonitoring] = useState<string[]>([]);
 
   useEffect(() => {
@@ -89,15 +97,19 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
   };
 
   const resetForm = () => {
-    setStudentId(''); setStudentName(''); setDepartment(''); setMajor('');
-    setEmail(''); setPhone(''); setRiskCategory(''); setAdvisorId('');
+    setStudentId(''); setStudentName(''); setTermSemester(''); setDateOfMeeting('');
+    setDepartment(''); setMajor(''); setEmail(''); setPhone('');
+    setRiskCategory(''); setAdvisorId('');
     setCgpa(''); setCredits(''); setFinancialAid('');
-    setRootAcademic([]); setRootExternal([]); setRootEngagement([]); setAdvisorNotes('');
-    setCourseStrategy([]); setSupportServices([]); setMonitoring([]);
+    setRootAcademic([]); setRootExternal([]); setRootEngagement([]);
+    setOtherAcademic(''); setOtherExternal(''); setOtherEngagement('');
+    setAdvisorNotes('');
+    setCourseStrategy([]); setOtherCourseStrategy('');
+    setSupportServices([]); setOtherSupport('');
+    setMonitoring([]);
   };
 
   const handleSave = async () => {
-    // Validation
     if (!studentId.trim()) { toast.error('Student ID is required.'); return; }
     if (!studentName.trim()) { toast.error('Student Name is required.'); return; }
     if (!department) { toast.error('Department is required.'); return; }
@@ -110,7 +122,6 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
       toast.error('Credits must be a valid number.'); return;
     }
 
-    // Check duplicate
     const { data: existing } = await supabase
       .from('risk_cases')
       .select('case_id')
@@ -126,7 +137,6 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
 
     setSaving(true);
     try {
-      // Create risk case
       const { data: newCase, error: caseError } = await supabase.from('risk_cases').insert({
         student_id: studentId.trim(),
         student_name: studentName.trim(),
@@ -138,30 +148,44 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
         aip_status: 'not_started',
         midterm_review_status: 'not_started',
         outcome_status: 'not_started',
-      }).select('case_id').single();
+        term_semester: termSemester || null,
+        date_of_meeting: dateOfMeeting || null,
+        advisor_email: null,
+        major: major || null,
+        student_email: email || null,
+        student_phone: phone || null,
+        cgpa: cgpa ? Number(cgpa) : null,
+        credits_completed: credits ? Number(credits) : null,
+        financial_aid: financialAid || null,
+      } as any).select('case_id').single();
 
       if (caseError || !newCase) {
         toast.error('Failed to create case.'); setSaving(false); return;
       }
 
-      // Create intervention form if any root cause or AIP data provided
-      const hasFormData = rootAcademic.length > 0 || rootExternal.length > 0 || rootEngagement.length > 0 ||
-        advisorNotes || courseStrategy.length > 0 || supportServices.length > 0 || monitoring.length > 0;
+      // Build arrays with "Other" appended if provided
+      const finalAcademic = [...rootAcademic, ...(otherAcademic ? [`Other: ${otherAcademic}`] : [])];
+      const finalExternal = [...rootExternal, ...(otherExternal ? [`Other: ${otherExternal}`] : [])];
+      const finalEngagement = [...rootEngagement, ...(otherEngagement ? [`Other: ${otherEngagement}`] : [])];
+      const finalCourseStrategy = [...courseStrategy, ...(otherCourseStrategy ? [`Other: ${otherCourseStrategy}`] : [])];
+      const finalSupport = [...supportServices, ...(otherSupport ? [`Other: ${otherSupport}`] : [])];
+
+      const hasFormData = finalAcademic.length > 0 || finalExternal.length > 0 || finalEngagement.length > 0 ||
+        advisorNotes || finalCourseStrategy.length > 0 || finalSupport.length > 0 || monitoring.length > 0;
 
       if (hasFormData) {
         await supabase.from('intervention_forms').insert({
           case_id: newCase.case_id,
-          root_cause_academic: rootAcademic,
-          root_cause_external: rootExternal,
-          root_cause_engagement: rootEngagement,
+          root_cause_academic: finalAcademic,
+          root_cause_external: finalExternal,
+          root_cause_engagement: finalEngagement,
           advisor_notes: advisorNotes || null,
-          course_strategy: courseStrategy,
-          support_services: supportServices,
+          course_strategy: finalCourseStrategy,
+          support_services: finalSupport,
           monitoring_requirements: monitoring,
         });
       }
 
-      // Audit log
       await supabase.from('audit_log').insert({
         action: 'case_created',
         target_record: newCase.case_id,
@@ -198,17 +222,25 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
         </DialogHeader>
         <ScrollArea className="max-h-[calc(90vh-8rem)] px-6">
           <div className="space-y-6 pb-6">
-            {/* Student Information */}
+            {/* Section A: Student Information */}
             <div>
-              <h3 className="text-sm font-semibold text-primary mb-3">Student Information</h3>
+              <h3 className="text-sm font-semibold text-primary mb-3">Section A — Student Information</h3>
               <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Student Name *</Label>
+                  <Input value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder="Full name" />
+                </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Student ID *</Label>
                   <Input value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="e.g. 202401234" />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Student Name *</Label>
-                  <Input value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder="Full name" />
+                  <Label className="text-xs">Term / Semester</Label>
+                  <Input value={termSemester} onChange={(e) => setTermSemester(e.target.value)} placeholder="e.g. Spring 2026" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Date of Meeting</Label>
+                  <Input type="date" value={dateOfMeeting} onChange={(e) => setDateOfMeeting(e.target.value)} />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Department *</Label>
@@ -220,38 +252,19 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Major</Label>
+                  <Label className="text-xs">Major / Program</Label>
                   <Input value={major} onChange={(e) => setMajor(e.target.value)} placeholder="e.g. Marketing" />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Email</Label>
+                  <Label className="text-xs">Student Email</Label>
                   <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="student@lau.edu" />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Phone</Label>
+                  <Label className="text-xs">Phone Number</Label>
                   <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+961..." />
                 </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Risk Category & Advisor */}
-            <div>
-              <h3 className="text-sm font-semibold text-primary mb-3">Risk Category & Advisor</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Risk Category *</Label>
-                  <Select value={riskCategory} onValueChange={setRiskCategory}>
-                    <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Category A">Category A (&lt;45 credits, CGPA ≤2.3)</SelectItem>
-                      <SelectItem value="Category B">Category B (≥45 credits, CGPA ≤2.2)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Assign Advisor</Label>
+                <div className="space-y-1 col-span-2">
+                  <Label className="text-xs">Assigned Special Advisor</Label>
                   <Select value={advisorId} onValueChange={setAdvisorId}>
                     <SelectTrigger><SelectValue placeholder="Select advisor..." /></SelectTrigger>
                     <SelectContent>
@@ -268,10 +281,10 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
 
             <Separator />
 
-            {/* Academic Snapshot */}
+            {/* Section B: Academic Snapshot */}
             <div>
-              <h3 className="text-sm font-semibold text-primary mb-3">Academic Snapshot</h3>
-              <div className="grid grid-cols-3 gap-3">
+              <h3 className="text-sm font-semibold text-primary mb-3">Section B — Academic Snapshot (from Cognos)</h3>
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">CGPA</Label>
                   <Input value={cgpa} onChange={(e) => setCgpa(e.target.value)} placeholder="e.g. 2.1" />
@@ -280,40 +293,58 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
                   <Label className="text-xs">Credits Completed</Label>
                   <Input value={credits} onChange={(e) => setCredits(e.target.value)} placeholder="e.g. 36" />
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Financial Aid</Label>
-                  <Select value={financialAid} onValueChange={setFinancialAid}>
-                    <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="na">N/A</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              </div>
+              <div className="mt-3 space-y-2">
+                <Label className="text-xs font-medium">Risk Category * (check one)</Label>
+                <Select value={riskCategory} onValueChange={setRiskCategory}>
+                  <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Category A">Category A: &lt;45 credits and CGPA ≤ 2.3</SelectItem>
+                    <SelectItem value="Category B">Category B: ≥45 credits and CGPA ≤ 2.2</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="mt-3 space-y-1">
+                <Label className="text-xs">Financial Aid</Label>
+                <Select value={financialAid} onValueChange={setFinancialAid}>
+                  <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_applicable">Not Applicable</SelectItem>
+                    <SelectItem value="applicable">Applicable</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <Separator />
 
-            {/* Root Cause Assessment */}
+            {/* Section C: Root Cause Assessment */}
             <div>
-              <h3 className="text-sm font-semibold text-primary mb-3">Root Cause Assessment</h3>
+              <h3 className="text-sm font-semibold text-primary mb-3">Section C — Root Cause Assessment</h3>
               <div className="space-y-4">
                 <div>
-                  <Label className="text-xs font-medium">Academic Factors</Label>
+                  <Label className="text-xs font-medium">1) Academic Factors (check all that apply)</Label>
                   <CheckboxGroup items={academicFactors} selected={rootAcademic} onToggle={(v) => toggleList(rootAcademic, setRootAcademic, v)} />
+                  <div className="mt-2">
+                    <Input value={otherAcademic} onChange={(e) => setOtherAcademic(e.target.value)} placeholder="Other (specify)..." className="text-sm" />
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-xs font-medium">External Factors</Label>
+                  <Label className="text-xs font-medium">2) External / Personal Factors</Label>
                   <CheckboxGroup items={externalFactors} selected={rootExternal} onToggle={(v) => toggleList(rootExternal, setRootExternal, v)} />
+                  <div className="mt-2">
+                    <Input value={otherExternal} onChange={(e) => setOtherExternal(e.target.value)} placeholder="Other (specify)..." className="text-sm" />
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-xs font-medium">Engagement Factors</Label>
+                  <Label className="text-xs font-medium">3) Engagement Factors</Label>
                   <CheckboxGroup items={engagementFactors} selected={rootEngagement} onToggle={(v) => toggleList(rootEngagement, setRootEngagement, v)} />
+                  <div className="mt-2">
+                    <Input value={otherEngagement} onChange={(e) => setOtherEngagement(e.target.value)} placeholder="Other (specify)..." className="text-sm" />
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-medium">Advisor Notes</Label>
+                  <Label className="text-xs font-medium">Advisor Notes / Summary of Key Causes</Label>
                   <Textarea value={advisorNotes} onChange={(e) => setAdvisorNotes(e.target.value)} placeholder="Summary of key observations..." rows={3} />
                 </div>
               </div>
@@ -321,20 +352,26 @@ const CreateCaseDialog = ({ open, onOpenChange, onCreated }: CreateCaseDialogPro
 
             <Separator />
 
-            {/* Academic Improvement Plan */}
+            {/* Section D: Academic Improvement Plan */}
             <div>
-              <h3 className="text-sm font-semibold text-primary mb-3">Academic Improvement Plan</h3>
+              <h3 className="text-sm font-semibold text-primary mb-3">Section D — Academic Improvement Plan</h3>
               <div className="space-y-4">
                 <div>
-                  <Label className="text-xs font-medium">Course Strategy</Label>
+                  <Label className="text-xs font-medium">D1) Course Strategy</Label>
                   <CheckboxGroup items={courseStrategies} selected={courseStrategy} onToggle={(v) => toggleList(courseStrategy, setCourseStrategy, v)} />
+                  <div className="mt-2">
+                    <Input value={otherCourseStrategy} onChange={(e) => setOtherCourseStrategy(e.target.value)} placeholder="Other (specify)..." className="text-sm" />
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-xs font-medium">Support Activities</Label>
+                  <Label className="text-xs font-medium">D2) Support Activities</Label>
                   <CheckboxGroup items={supportActivities} selected={supportServices} onToggle={(v) => toggleList(supportServices, setSupportServices, v)} />
+                  <div className="mt-2">
+                    <Input value={otherSupport} onChange={(e) => setOtherSupport(e.target.value)} placeholder="Other (specify)..." className="text-sm" />
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-xs font-medium">Monitoring Requirements</Label>
+                  <Label className="text-xs font-medium">D3) Monitoring Requirements</Label>
                   <CheckboxGroup items={monitoringReqs} selected={monitoring} onToggle={(v) => toggleList(monitoring, setMonitoring, v)} />
                 </div>
               </div>

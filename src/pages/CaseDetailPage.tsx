@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
@@ -24,6 +23,7 @@ const CaseDetailPage = () => {
   const [followUps, setFollowUps] = useState<any[]>([]);
   const [outcome, setOutcome] = useState<any>(null);
   const [newFollowUp, setNewFollowUp] = useState({ date: '', progress_notes: '' });
+  const [otherOutcome, setOtherOutcome] = useState('');
 
   // Intervention form state
   const [formData, setFormData] = useState({
@@ -62,7 +62,10 @@ const CaseDetailPage = () => {
     setFollowUps(fups || []);
 
     const { data: out } = await supabase.from('outcomes').select('*').eq('case_id', caseId).single();
-    setOutcome(out);
+    if (out) {
+      setOutcome(out);
+      setOtherOutcome((out as any).other_outcome || '');
+    }
   };
 
   const toggleCheckbox = (field: keyof typeof formData, value: string) => {
@@ -119,7 +122,10 @@ const CaseDetailPage = () => {
       toast.error('Intervention form must be completed before recording outcome.');
       return;
     }
-    const payload = { case_id: caseId, final_outcome: finalOutcome };
+    const payload: any = { case_id: caseId, final_outcome: finalOutcome };
+    if (finalOutcome === 'other') {
+      payload.other_outcome = otherOutcome;
+    }
     if (outcome) {
       await supabase.from('outcomes').update(payload).eq('case_id', caseId);
     } else {
@@ -135,9 +141,9 @@ const CaseDetailPage = () => {
   const academicFactors = ['Study skills', 'Time management', 'Quantitative difficulty', 'Writing difficulty', 'Missing prerequisites', 'Test anxiety'];
   const externalFactors = ['Work obligations', 'Family responsibilities', 'Financial stress', 'Health concerns', 'Mental health concerns'];
   const engagementFactors = ['Poor attendance', 'Low participation', 'Missed deadlines', 'Lack of motivation', 'Major mismatch'];
-  const courseStrategies = ['Maintain current schedule', 'Reduce course load', 'Withdraw from courses', 'Retake courses', 'Course sequencing adjustments'];
-  const supportActivities = ['Tutoring', 'Writing Center', 'Counseling referral', 'Learning support'];
-  const monitoringReqs = ['Bi-weekly advisor check-in', 'Midterm grade review'];
+  const courseStrategies = ['Maintain current schedule', 'Reduce course load', 'Withdraw from course(s)', 'Retake course(s) next term', 'Recommended course sequencing adjustments'];
+  const supportActivities = ['Tutoring', 'Writing Center sessions', 'Counseling referral (Student Affairs)', 'Learning support / accommodation referral'];
+  const monitoringReqs = ['Bi-weekly advisor check-in', 'Midterm grade review required'];
 
   const canEditForm = (user?.role === 'advisor' && caseData.assigned_advisor === user.id) || user?.role === 'admin' || user?.role === 'department_chair';
   const canRecordOutcome = user?.role === 'admin';
@@ -156,7 +162,7 @@ const CaseDetailPage = () => {
             <ArrowLeft className="h-4 w-4 mr-1" /> Back
           </Button>
           <div>
-            <h1 className="text-2xl font-serif font-semibold">Student Intervention Form</h1>
+            <h1 className="text-2xl font-serif font-semibold">Student Academic Risk Intervention Form</h1>
             <p className="text-sm text-muted-foreground">AKSOB — Confidential Academic Record</p>
           </div>
         </div>
@@ -168,12 +174,34 @@ const CaseDetailPage = () => {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div><Label className="text-muted-foreground">Student Name</Label><p className="font-medium">{caseData.student_name}</p></div>
               <div><Label className="text-muted-foreground">Student ID</Label><p className="font-mono">{caseData.student_id}</p></div>
+              <div><Label className="text-muted-foreground">Term / Semester</Label><p>{(caseData as any).term_semester || '—'}</p></div>
+              <div><Label className="text-muted-foreground">Date of Meeting</Label><p>{(caseData as any).date_of_meeting ? new Date((caseData as any).date_of_meeting).toLocaleDateString() : '—'}</p></div>
               <div><Label className="text-muted-foreground">Department</Label><p>{caseData.department}</p></div>
+              <div><Label className="text-muted-foreground">Major / Program</Label><p>{(caseData as any).major || '—'}</p></div>
+              <div><Label className="text-muted-foreground">Student Email</Label><p>{(caseData as any).student_email || '—'}</p></div>
+              <div><Label className="text-muted-foreground">Phone Number</Label><p>{(caseData as any).student_phone || '—'}</p></div>
+              <div><Label className="text-muted-foreground">Assigned Special Advisor</Label><p>{caseData.assigned_advisor_name || '—'}</p></div>
+              <div><Label className="text-muted-foreground">Advisor Email</Label><p>{(caseData as any).advisor_email || '—'}</p></div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* SECTION B: Academic Snapshot */}
+        <Card>
+          <CardHeader><CardTitle className="text-base font-sans">Section B — Academic Snapshot (from Cognos)</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div><Label className="text-muted-foreground">CGPA</Label><p>{(caseData as any).cgpa ?? '—'}</p></div>
+              <div><Label className="text-muted-foreground">Credits Completed</Label><p>{(caseData as any).credits_completed ?? '—'}</p></div>
               <div><Label className="text-muted-foreground">Risk Category</Label>
                 <Badge variant={caseData.risk_category === 'Category A' ? 'destructive' : 'secondary'}>{caseData.risk_category}</Badge>
+                <span className="text-xs text-muted-foreground ml-2">
+                  {caseData.risk_category === 'Category A' ? '(<45 credits and CGPA ≤ 2.3)' : '(≥45 credits and CGPA ≤ 2.2)'}
+                </span>
               </div>
-              <div><Label className="text-muted-foreground">Assigned Advisor</Label><p>{caseData.assigned_advisor_name || '—'}</p></div>
-              <div><Label className="text-muted-foreground">Case Created</Label><p>{new Date(caseData.created_date).toLocaleDateString()}</p></div>
+              <div><Label className="text-muted-foreground">Financial Aid</Label>
+                <p>{(caseData as any).financial_aid === 'applicable' ? 'Applicable' : (caseData as any).financial_aid === 'not_applicable' ? 'Not Applicable' : '—'}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -198,7 +226,7 @@ const CaseDetailPage = () => {
           <CardHeader><CardTitle className="text-base font-sans">Section C — Root Cause Assessment</CardTitle></CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <Label className="text-sm font-medium">Academic Factors</Label>
+              <Label className="text-sm font-medium">1) Academic Factors (check all that apply)</Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {academicFactors.map((f) => (
                   <label key={f} className="flex items-center gap-2 text-sm">
@@ -211,9 +239,12 @@ const CaseDetailPage = () => {
                   </label>
                 ))}
               </div>
+              {formData.root_cause_academic.filter(v => v.startsWith('Other:')).map(v => (
+                <p key={v} className="text-sm text-muted-foreground mt-1 italic">{v}</p>
+              ))}
             </div>
             <div>
-              <Label className="text-sm font-medium">External Factors</Label>
+              <Label className="text-sm font-medium">2) External / Personal Factors</Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {externalFactors.map((f) => (
                   <label key={f} className="flex items-center gap-2 text-sm">
@@ -226,9 +257,12 @@ const CaseDetailPage = () => {
                   </label>
                 ))}
               </div>
+              {formData.root_cause_external.filter(v => v.startsWith('Other:')).map(v => (
+                <p key={v} className="text-sm text-muted-foreground mt-1 italic">{v}</p>
+              ))}
             </div>
             <div>
-              <Label className="text-sm font-medium">Engagement Factors</Label>
+              <Label className="text-sm font-medium">3) Engagement Factors</Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {engagementFactors.map((f) => (
                   <label key={f} className="flex items-center gap-2 text-sm">
@@ -241,9 +275,12 @@ const CaseDetailPage = () => {
                   </label>
                 ))}
               </div>
+              {formData.root_cause_engagement.filter(v => v.startsWith('Other:')).map(v => (
+                <p key={v} className="text-sm text-muted-foreground mt-1 italic">{v}</p>
+              ))}
             </div>
             <div>
-              <Label className="text-sm font-medium">Advisor Notes</Label>
+              <Label className="text-sm font-medium">Advisor Notes / Summary of Key Causes</Label>
               <Textarea
                 value={formData.advisor_notes}
                 onChange={(e) => setFormData({ ...formData, advisor_notes: e.target.value })}
@@ -260,7 +297,7 @@ const CaseDetailPage = () => {
           <CardHeader><CardTitle className="text-base font-sans">Section D — Academic Improvement Plan</CardTitle></CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <Label className="text-sm font-medium">Course Strategy</Label>
+              <Label className="text-sm font-medium">D1) Course Strategy</Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {courseStrategies.map((s) => (
                   <label key={s} className="flex items-center gap-2 text-sm">
@@ -273,9 +310,12 @@ const CaseDetailPage = () => {
                   </label>
                 ))}
               </div>
+              {formData.course_strategy.filter(v => v.startsWith('Other:')).map(v => (
+                <p key={v} className="text-sm text-muted-foreground mt-1 italic">{v}</p>
+              ))}
             </div>
             <div>
-              <Label className="text-sm font-medium">Support Activities</Label>
+              <Label className="text-sm font-medium">D2) Support Activities</Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {supportActivities.map((s) => (
                   <label key={s} className="flex items-center gap-2 text-sm">
@@ -288,9 +328,12 @@ const CaseDetailPage = () => {
                   </label>
                 ))}
               </div>
+              {formData.support_services.filter(v => v.startsWith('Other:')).map(v => (
+                <p key={v} className="text-sm text-muted-foreground mt-1 italic">{v}</p>
+              ))}
             </div>
             <div>
-              <Label className="text-sm font-medium">Monitoring Requirements</Label>
+              <Label className="text-sm font-medium">D3) Monitoring Requirements</Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {monitoringReqs.map((m) => (
                   <label key={m} className="flex items-center gap-2 text-sm">
@@ -330,7 +373,7 @@ const CaseDetailPage = () => {
 
         {/* SECTION E: Follow-Up Tracking */}
         <Card>
-          <CardHeader><CardTitle className="text-base font-sans">Section E — Follow-Up Timeline</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base font-sans">Section E — Follow-Up Tracking</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             {followUps.length === 0 && (
               <p className="text-sm text-muted-foreground">No follow-up entries yet.</p>
@@ -360,28 +403,39 @@ const CaseDetailPage = () => {
           </CardContent>
         </Card>
 
-        {/* SECTION F: Final Outcome */}
+        {/* SECTION F: Final Outcome (To be Filled by Assistant Deans) */}
         {canRecordOutcome && (
           <Card>
-            <CardHeader><CardTitle className="text-base font-sans">Section F — Final Outcome</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base font-sans">Section F — Final Outcome (To be Filled by Assistant Deans)</CardTitle></CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {[
-                  { value: 'improved_above_threshold', label: 'Student improved above threshold' },
-                  { value: 'improved_still_at_risk', label: 'Student improved but still at risk' },
-                  { value: 'declined_escalated', label: 'Student declined / probation escalated' },
-                  { value: 'withdrew', label: 'Student withdrew from term' },
-                ].map((opt) => (
-                  <Button
-                    key={opt.value}
-                    variant={outcome?.final_outcome === opt.value ? 'default' : 'outline'}
-                    size="sm"
-                    className="mr-2 mb-2"
-                    onClick={() => saveOutcome(opt.value)}
-                  >
-                    {opt.label}
-                  </Button>
-                ))}
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: 'improved_above_threshold', label: 'Student improved above threshold' },
+                    { value: 'improved_still_at_risk', label: 'Student improved but still at risk' },
+                    { value: 'declined_escalated', label: 'Student declined / probation case escalated' },
+                    { value: 'withdrew', label: 'Student withdrew from term' },
+                    { value: 'other', label: 'Other' },
+                  ].map((opt) => (
+                    <Button
+                      key={opt.value}
+                      variant={outcome?.final_outcome === opt.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => opt.value !== 'other' ? saveOutcome(opt.value) : undefined}
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+                {(outcome?.final_outcome === 'other' || !outcome) && (
+                  <div className="flex gap-2 items-end">
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-xs">Other outcome (specify)</Label>
+                      <Input value={otherOutcome} onChange={(e) => setOtherOutcome(e.target.value)} placeholder="Describe outcome..." />
+                    </div>
+                    <Button size="sm" onClick={() => saveOutcome('other')} disabled={!otherOutcome.trim()}>Save Other</Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

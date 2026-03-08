@@ -156,9 +156,9 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['student_id', 'student_name', 'department', 'risk_category'],
-      ['202401234', 'Jane Doe', 'Marketing', 'Category A'],
-      ['202405678', 'John Smith', 'Finance', 'Category B'],
+      ['student_id', 'student_name', 'department', 'risk_category', 'major', 'student_email', 'student_phone', 'cgpa', 'credits_completed', 'term_semester', 'financial_aid'],
+      ['202401234', 'Jane Doe', 'Marketing', 'Category A', 'Marketing', 'jane.doe@lau.edu', '+961...', '2.1', '30', 'Spring 2026', 'Not Applicable'],
+      ['202405678', 'John Smith', 'Finance', 'Category B', 'Finance', 'john.smith@lau.edu', '+961...', '1.9', '50', 'Spring 2026', 'Applicable'],
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
