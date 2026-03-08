@@ -154,6 +154,12 @@ const CasesPage = () => {
                 New Intervention Case
               </Button>
             )}
+            {user?.role === 'admin' && (
+              <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Import
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={exportCSV}>
               <Download className="h-4 w-4 mr-2" />
               Export CSV
