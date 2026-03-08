@@ -456,7 +456,7 @@ const GuidePage = () => {
         {/* 7 — Usage Notes */}
         <Section id="notes" title="7. Usage Notes">
           <ul className="space-y-2">
-            <Bullet>The system currently contains demo/mock data for testing purposes. Production data should be imported via the bulk import feature or created individually.</Bullet>
+            <Bullet>The system operates on a clean-slate data policy — no mock or seeded data is included. All records are created through manual entry or bulk import of real registrar data.</Bullet>
             <Bullet><strong>Case creation</strong> is performed by Admins or Department Chairs. Advisors cannot create cases.</Bullet>
             <Bullet><strong>Advisor assignment</strong> is done by Admins or Department Chairs from the case detail page.</Bullet>
             <Bullet><strong>Intervention plan details</strong> (the AIP form) are completed by the assigned advisor.</Bullet>
