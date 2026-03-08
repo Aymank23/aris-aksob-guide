@@ -27,10 +27,9 @@ const navItems = [
   { title: 'Guide', path: '/guide', icon: BookOpen, roles: ['admin'] },
 ];
 
-const AppSidebar = () => {
+const AppSidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
 
   const filteredNav = navItems.filter((item) =>
     item.roles.includes(user?.role || '')
