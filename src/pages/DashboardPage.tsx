@@ -8,6 +8,7 @@ import {
   AlertTriangle, Users, CheckCircle, Clock,
   FileText, TrendingUp, UserCheck, BookOpen, HeartPulse,
 } from 'lucide-react';
+import DashboardTour from '@/components/DashboardTour';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
@@ -62,12 +63,15 @@ const DashboardPage = () => {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-serif font-semibold text-foreground">Executive ARIP Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Real-time academic risk intervention overview</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-serif font-semibold text-foreground">Executive ARIP Dashboard</h1>
+            <p className="text-sm text-muted-foreground mt-1">Real-time academic risk intervention overview</p>
+          </div>
+          <DashboardTour />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div data-tour="kpi-section" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <KpiCard title="Total Flagged" value={stats.totalFlagged} icon={AlertTriangle} variant="warning" />
           <KpiCard title="Category A" value={stats.categoryA} subtitle="<45 credits, CGPA ≤2.3" icon={BookOpen} variant="destructive" />
           <KpiCard title="Category B" value={stats.categoryB} subtitle="≥45 credits, CGPA ≤2.2" icon={BookOpen} variant="warning" />
@@ -75,7 +79,7 @@ const DashboardPage = () => {
           <KpiCard title="Meetings Done" value={`${stats.meetingsCompleted}%`} icon={CheckCircle} variant="success" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div data-tour="progress-section" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard title="AIP Completed" value={`${stats.aipCompleted}%`} icon={FileText} />
           <KpiCard title="Midterm Reviews" value={`${stats.midtermReviews}%`} icon={Clock} />
           <KpiCard title="Improved" value={`${stats.improved}%`} icon={TrendingUp} variant="success" />
@@ -83,7 +87,7 @@ const DashboardPage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+          <Card data-tour="dept-chart">
             <CardHeader>
               <CardTitle className="text-base font-sans font-medium">Students at Risk by Department</CardTitle>
             </CardHeader>
@@ -100,7 +104,7 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-tour="status-chart">
             <CardHeader>
               <CardTitle className="text-base font-sans font-medium">Case Status Distribution</CardTitle>
             </CardHeader>
