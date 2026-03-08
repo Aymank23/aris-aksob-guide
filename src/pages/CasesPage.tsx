@@ -153,7 +153,7 @@ const CasesPage = () => {
         </div>
 
         {/* Filters */}
-        <Card>
+        <Card data-tour="cases-filters">
           <CardContent className="p-4">
             <div className="flex gap-4 items-center">
               <div className="relative flex-1 max-w-sm">
