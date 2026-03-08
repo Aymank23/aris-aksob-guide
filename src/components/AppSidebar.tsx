@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   UserCog,
   BookOpen,
+  Mail,
   LogOut,
   ChevronLeft,
 } from 'lucide-react';
