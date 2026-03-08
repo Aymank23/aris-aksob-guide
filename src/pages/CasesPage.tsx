@@ -8,11 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { Search, Download, Eye, UserPlus, Plus, Pencil } from 'lucide-react';
+import { Search, Download, Eye, UserPlus, Plus, Pencil, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
 import CreateCaseDialog from '@/components/CreateCaseDialog';
+import BulkImportDialog from '@/components/BulkImportDialog';
 
 interface RiskCase {
   case_id: string;
@@ -51,6 +52,7 @@ const CasesPage = () => {
   const [selectedCase, setSelectedCase] = useState<string | null>(null);
   const [selectedAdvisor, setSelectedAdvisor] = useState('');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   useEffect(() => {
     loadCases();
@@ -150,6 +152,12 @@ const CasesPage = () => {
               <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 New Intervention Case
+              </Button>
+            )}
+            {user?.role === 'admin' && (
+              <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Import
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={exportCSV}>
@@ -303,6 +311,13 @@ const CasesPage = () => {
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
           onCreated={() => { loadCases(); loadAdvisors(); }}
+        />
+
+        {/* Bulk Import Dialog */}
+        <BulkImportDialog
+          open={importDialogOpen}
+          onOpenChange={setImportDialogOpen}
+          onImported={() => { loadCases(); loadAdvisors(); }}
         />
       </div>
     </AppLayout>
