@@ -24,7 +24,7 @@ const SubSection = ({ title, children }: { title: string; children: React.ReactN
 
 const Bullet = ({ children }: { children: React.ReactNode }) => (
   <li className="flex gap-2 items-start text-sm text-muted-foreground leading-relaxed">
-    <ArrowRight className="h-3.5 w-3.5 mt-1 shrink-0 text-primary" />
+    <span className="mt-1 shrink-0"><ArrowRight className="h-3.5 w-3.5 text-primary" /></span>
     <span>{children}</span>
   </li>
 );
