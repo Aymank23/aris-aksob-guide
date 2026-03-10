@@ -20,7 +20,7 @@ const navItems = [
   { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'department_chair'] },
   { title: 'Cases', path: '/cases', icon: FileText, roles: ['admin', 'department_chair', 'advisor'] },
   { title: 'Advisor Workload', path: '/advisor-workload', icon: Users, roles: ['admin', 'department_chair'] },
-  { title: 'Department Monitoring', path: '/department-monitoring', icon: Building2, roles: ['admin'] },
+  { title: 'Department Monitoring', path: '/department-monitoring', icon: Building2, roles: ['admin', 'department_chair'] },
   { title: 'Outcomes Analytics', path: '/outcomes', icon: TrendingUp, roles: ['admin', 'department_chair'] },
   { title: 'Compliance Tracking', path: '/compliance', icon: ShieldCheck, roles: ['admin', 'department_chair'] },
   { title: 'User Management', path: '/user-management', icon: UserCog, roles: ['admin'] },

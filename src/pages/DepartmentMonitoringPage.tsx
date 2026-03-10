@@ -112,7 +112,7 @@ const DepartmentMonitoringPage = () => {
             {isChair ? `${user?.department} — Department Dashboard` : 'Department Monitoring'}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {isChair ? 'Monitor your department's risk cases and advisor performance' : 'Cross-department risk and compliance overview'}
+            {isChair ? 'Monitor your department risk cases and advisor performance' : 'Cross-department risk and compliance overview'}
           </p>
         </div>
 
