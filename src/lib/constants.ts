@@ -1,6 +1,8 @@
 // ARIP form option lists — shared across CreateCaseDialog and CaseDetailPage
 export const departments = ['Marketing', 'Finance', 'Accounting', 'Management', 'Economics', 'HITM'];
 
+export const campuses = ['Beirut', 'Byblos'];
+
 export const academicFactors = [
   'Study skills',
   'Time management',

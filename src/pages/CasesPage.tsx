@@ -6,15 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { loadAdvisors, type Advisor } from '@/lib/advisors';
-import { Search, Download, Eye, UserPlus, Plus, Pencil, Upload } from 'lucide-react';
+import { Search, Download, Eye, UserPlus, Plus, Pencil, Upload, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CreateCaseDialog from '@/components/CreateCaseDialog';
 import BulkImportDialog from '@/components/BulkImportDialog';
+import DeleteCaseDialog from '@/components/DeleteCaseDialog';
+import AssignAdvisorDialog from '@/components/AssignAdvisorDialog';
 import CasesTour from '@/components/CasesTour';
 
 interface RiskCase {
@@ -49,17 +48,22 @@ const CasesPage = () => {
   const [search, setSearch] = useState('');
   const [filterDept, setFilterDept] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
-  const [advisors, setAdvisors] = useState<Advisor[]>([]);
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [selectedCase, setSelectedCase] = useState<string | null>(null);
-  const [selectedAdvisor, setSelectedAdvisor] = useState('');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
 
-  useEffect(() => {
-    loadCases();
-    refreshAdvisors();
-  }, []);
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ caseId: string; studentName: string } | null>(null);
+
+  // Assign advisor dialog state
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [assignTarget, setAssignTarget] = useState<{
+    caseId: string;
+    advisorId: string | null;
+    advisorName: string | null;
+  } | null>(null);
+
+  useEffect(() => { loadCases(); }, []);
 
   const loadCases = async () => {
     let query = supabase.from('risk_cases').select('*');
@@ -71,29 +75,6 @@ const CasesPage = () => {
     }
     const { data } = await query.order('created_date', { ascending: false });
     setCases(data || []);
-  };
-
-  const refreshAdvisors = () => loadAdvisors().then(setAdvisors);
-
-  const assignAdvisor = async () => {
-    if (!selectedCase || !selectedAdvisor) return;
-    const advisor = advisors.find((a) => a.advisor_id === selectedAdvisor);
-    if (advisor && advisor.case_count >= 10) {
-      alert('This advisor has reached the maximum of 10 assigned students.');
-      return;
-    }
-    await supabase
-      .from('risk_cases')
-      .update({
-        assigned_advisor: selectedAdvisor,
-        assigned_advisor_name: advisor?.name,
-      })
-      .eq('case_id', selectedCase);
-    setAssignDialogOpen(false);
-    setSelectedCase(null);
-    setSelectedAdvisor('');
-    loadCases();
-    refreshAdvisors();
   };
 
   const filtered = cases.filter((c) => {
@@ -122,6 +103,8 @@ const CasesPage = () => {
     a.download = 'arip_cases.csv';
     a.click();
   };
+
+  const canManageAssignments = user?.role === 'admin' || user?.role === 'department_chair';
 
   return (
     <AppLayout>
@@ -226,7 +209,36 @@ const CasesPage = () => {
                           {c.risk_category}
                         </Badge>
                       </TableCell>
-                      <TableCell>{c.assigned_advisor_name || <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell>
+                        {canManageAssignments ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto p-1 text-xs font-normal"
+                            onClick={() => {
+                              setAssignTarget({
+                                caseId: c.case_id,
+                                advisorId: c.assigned_advisor,
+                                advisorName: c.assigned_advisor_name,
+                              });
+                              setAssignDialogOpen(true);
+                            }}
+                          >
+                            {c.assigned_advisor_name ? (
+                              <span className="flex items-center gap-1">
+                                {c.assigned_advisor_name}
+                                <Pencil className="h-3 w-3 text-muted-foreground" />
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                <UserPlus className="h-3 w-3" /> Assign
+                              </span>
+                            )}
+                          </Button>
+                        ) : (
+                          c.assigned_advisor_name || <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>{statusBadge(c.meeting_status)}</TableCell>
                       <TableCell>{statusBadge(c.aip_status)}</TableCell>
                       <TableCell>{statusBadge(c.midterm_review_status)}</TableCell>
@@ -236,21 +248,18 @@ const CasesPage = () => {
                           <Button variant="ghost" size="sm" onClick={() => navigate(`/cases/${c.case_id}`)} title="View">
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
-                          {(user?.role === 'advisor' && c.assigned_advisor === user.id) && (
-                            <Button variant="ghost" size="sm" onClick={() => navigate(`/cases/${c.case_id}`)} title="Edit">
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                          {(user?.role === 'admin' || user?.role === 'department_chair') && !c.assigned_advisor && (
+                          {user?.role === 'admin' && (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                setSelectedCase(c.case_id);
-                                setAssignDialogOpen(true);
+                                setDeleteTarget({ caseId: c.case_id, studentName: c.student_name });
+                                setDeleteDialogOpen(true);
                               }}
+                              title="Delete"
+                              className="text-destructive hover:text-destructive"
                             >
-                              <UserPlus className="h-3.5 w-3.5" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           )}
                         </div>
@@ -263,44 +272,39 @@ const CasesPage = () => {
           </CardContent>
         </Card>
 
-        {/* Assign Advisor Dialog */}
-        <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Assign Advisor</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Select Advisor</Label>
-                <Select value={selectedAdvisor} onValueChange={setSelectedAdvisor}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose advisor..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {advisors.map((a) => (
-                      <SelectItem key={a.advisor_id} value={a.advisor_id} disabled={a.case_count >= 10}>
-                        {a.name} ({a.department}) — {a.case_count}/10 cases
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={assignAdvisor} className="w-full">Assign</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
+        {/* Dialogs */}
         <CreateCaseDialog
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
-          onCreated={() => { loadCases(); refreshAdvisors(); }}
+          onCreated={loadCases}
         />
 
         <BulkImportDialog
           open={importDialogOpen}
           onOpenChange={setImportDialogOpen}
-          onImported={() => { loadCases(); refreshAdvisors(); }}
+          onImported={loadCases}
         />
+
+        {deleteTarget && (
+          <DeleteCaseDialog
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            caseId={deleteTarget.caseId}
+            studentName={deleteTarget.studentName}
+            onDeleted={loadCases}
+          />
+        )}
+
+        {assignTarget && (
+          <AssignAdvisorDialog
+            open={assignDialogOpen}
+            onOpenChange={setAssignDialogOpen}
+            caseId={assignTarget.caseId}
+            currentAdvisorId={assignTarget.advisorId}
+            currentAdvisorName={assignTarget.advisorName}
+            onUpdated={loadCases}
+          />
+        )}
       </div>
     </AppLayout>
   );

@@ -203,6 +203,7 @@ export type Database = {
           aip_status: string
           assigned_advisor: string | null
           assigned_advisor_name: string | null
+          campus: string | null
           case_id: string
           cgpa: number | null
           created_date: string
@@ -227,6 +228,7 @@ export type Database = {
           aip_status?: string
           assigned_advisor?: string | null
           assigned_advisor_name?: string | null
+          campus?: string | null
           case_id?: string
           cgpa?: number | null
           created_date?: string
@@ -251,6 +253,7 @@ export type Database = {
           aip_status?: string
           assigned_advisor?: string | null
           assigned_advisor_name?: string | null
+          campus?: string | null
           case_id?: string
           cgpa?: number | null
           created_date?: string
@@ -279,6 +282,42 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      students: {
+        Row: {
+          campus: string
+          cgpa: number | null
+          created_at: string
+          credits_completed: number | null
+          department: string
+          id: string
+          major: string | null
+          student_id: string
+          student_name: string
+        }
+        Insert: {
+          campus?: string
+          cgpa?: number | null
+          created_at?: string
+          credits_completed?: number | null
+          department: string
+          id?: string
+          major?: string | null
+          student_id: string
+          student_name: string
+        }
+        Update: {
+          campus?: string
+          cgpa?: number | null
+          created_at?: string
+          credits_completed?: number | null
+          department?: string
+          id?: string
+          major?: string | null
+          student_id?: string
+          student_name?: string
+        }
+        Relationships: []
       }
     }
     Views: {
