@@ -283,6 +283,39 @@ export type Database = {
           },
         ]
       }
+      semester_archives: {
+        Row: {
+          archived_by: string | null
+          archived_by_name: string | null
+          case_count: number
+          created_at: string
+          id: string
+          label: string
+          snapshot: Json
+          student_count: number
+        }
+        Insert: {
+          archived_by?: string | null
+          archived_by_name?: string | null
+          case_count?: number
+          created_at?: string
+          id?: string
+          label: string
+          snapshot?: Json
+          student_count?: number
+        }
+        Update: {
+          archived_by?: string | null
+          archived_by_name?: string | null
+          case_count?: number
+          created_at?: string
+          id?: string
+          label?: string
+          snapshot?: Json
+          student_count?: number
+        }
+        Relationships: []
+      }
       students: {
         Row: {
           campus: string
