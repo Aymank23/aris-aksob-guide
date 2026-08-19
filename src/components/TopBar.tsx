@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Shield } from 'lucide-react';
+import GlobalFilters from '@/components/GlobalFilters';
 
 const TopBar = () => {
   const now = new Date();
@@ -19,6 +20,7 @@ const TopBar = () => {
         </p>
       </div>
       <div className="flex items-center gap-4">
+        <GlobalFilters />
         <Badge variant="outline" className="text-xs font-normal">
           {term}
         </Badge>
