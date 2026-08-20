@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import KpiCard from '@/components/KpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFilters } from '@/contexts/FilterContext';
+import { loadScopedData, computeMetrics } from '@/lib/analytics';
 import { CHART_COLORS } from '@/lib/constants';
 import { Users, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -13,34 +15,28 @@ import AdvisorWorkloadTour from '@/components/AdvisorWorkloadTour';
 
 const AdvisorWorkloadPage = () => {
   const { user } = useAuth();
+  const { scope, campus } = useFilters();
   const [advisors, setAdvisors] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   const [deptSummary, setDeptSummary] = useState({ total: 0, assigned: 0, unassigned: 0 });
 
-  useEffect(() => { loadData(); }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const { data: users } = await supabase.from('app_users').select('*').eq('role', 'advisor').eq('status', 'active');
-    let caseQuery = supabase.from('risk_cases').select('*');
+    const data = await loadScopedData(user, scope);
+    const cases = data.cases;
+    const m = computeMetrics(data);
 
-    // Filter for chairs: only their department
-    if (user?.role === 'department_chair' && user.department) {
-      caseQuery = caseQuery.eq('department', user.department);
-    }
+    if (!users) return;
 
-    const { data: cases } = await caseQuery;
-    const { data: followUps } = await supabase.from('follow_ups').select('case_id');
-    const { data: interventions } = await supabase.from('intervention_forms').select('case_id');
+    const followUpSet = m.followUpSet;
+    const interventionSet = m.interventionSet;
 
-    if (!users || !cases) return;
-
-    const followUpSet = new Set(followUps?.map(f => f.case_id) || []);
-    const interventionSet = new Set(interventions?.map(f => f.case_id) || []);
-
-    // Filter advisors by department for chairs
+    // Filter advisors by department scope
     let filteredUsers = users;
     if (user?.role === 'department_chair' && user.department) {
       filteredUsers = users.filter(u => u.department === user.department);
+    } else if (scope.department !== 'all') {
+      filteredUsers = users.filter(u => u.department === scope.department);
     }
 
     const advisorStats = filteredUsers.map((u) => {
@@ -74,7 +70,9 @@ const AdvisorWorkloadPage = () => {
       assigned: assignedCases,
       unassigned: totalCases - assignedCases,
     });
-  };
+  }, [user, scope]);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const totalAssigned = advisors.reduce((s, a) => s + a.assigned, 0);
   const totalPending = advisors.reduce((s, a) => s + a.pending, 0);
@@ -95,6 +93,7 @@ const AdvisorWorkloadPage = () => {
               {isDeptChair
                 ? `Monitor advisor assignments within ${user?.department}`
                 : 'Monitor advisor assignments and case completion'}
+              {campus !== 'all' ? ` · ${campus} campus` : ''}
             </p>
           </div>
           <AdvisorWorkloadTour />

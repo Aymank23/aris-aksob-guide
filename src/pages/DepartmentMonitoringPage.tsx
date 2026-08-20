@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import KpiCard from '@/components/KpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,75 +6,64 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFilters } from '@/contexts/FilterContext';
+import { loadScopedData, computeMetrics, daysSince, OVERDUE_MEETING_DAYS } from '@/lib/analytics';
 import { CHART_COLORS } from '@/lib/constants';
-import { Building2, AlertTriangle, CheckCircle, Clock, Users } from 'lucide-react';
+import { Building2, AlertTriangle, CheckCircle, Clock, Users, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 const DepartmentMonitoringPage = () => {
   const { user } = useAuth();
+  const { scope, campus, setDepartment } = useFilters();
+  const navigate = useNavigate();
   const [deptStats, setDeptStats] = useState<any[]>([]);
   const [studentAlerts, setStudentAlerts] = useState<any[]>([]);
   const [advisorPerf, setAdvisorPerf] = useState<any[]>([]);
 
-  useEffect(() => { loadData(); }, []);
+  const loadData = useCallback(async () => {
+    const data = await loadScopedData(user, scope);
+    const m = computeMetrics(data);
+    const { cases, students } = data;
 
-  const loadData = async () => {
-    let caseQuery = supabase.from('risk_cases').select('*');
-    // Chairs see only their department
-    if (user?.role === 'department_chair' && user.department) {
-      caseQuery = caseQuery.eq('department', user.department);
-    }
+    const { data: advisorUsers } = await supabase
+      .from('app_users').select('*').eq('role', 'advisor').eq('status', 'active');
 
-    const [{ data: cases }, { data: students }, { data: advisorUsers }, { data: followUps }, { data: interventions }] = await Promise.all([
-      caseQuery,
-      supabase.from('students').select('*'),
-      supabase.from('app_users').select('*').eq('role', 'advisor').eq('status', 'active'),
-      supabase.from('follow_ups').select('case_id'),
-      supabase.from('intervention_forms').select('case_id'),
-    ]);
-
-    if (!cases) return;
-
-    const followUpSet = new Set(followUps?.map(f => f.case_id) || []);
-    const interventionSet = new Set(interventions?.map(f => f.case_id) || []);
-
-    // Department stats
-    const deptMap: Record<string, any> = {};
     const studentDeptMap: Record<string, number> = {};
-    students?.forEach((s: any) => {
-      if (user?.role === 'department_chair' && user.department && s.department !== user.department) return;
+    students.forEach((s: any) => {
       studentDeptMap[s.department] = (studentDeptMap[s.department] || 0) + 1;
     });
 
+    const deptMap: Record<string, any> = {};
     cases.forEach((c) => {
       if (!deptMap[c.department]) {
-        deptMap[c.department] = { name: c.department, total: 0, assigned: 0, completed: 0, overdue: 0, totalStudents: studentDeptMap[c.department] || 0 };
+        deptMap[c.department] = {
+          name: c.department, total: 0, assigned: 0, completed: 0, overdue: 0,
+          totalStudents: studentDeptMap[c.department] || 0,
+        };
       }
       const d = deptMap[c.department];
       d.total++;
       if (c.assigned_advisor) d.assigned++;
       if (c.outcome_status === 'completed') d.completed++;
-      const daysDiff = (Date.now() - new Date(c.created_date).getTime()) / (1000 * 60 * 60 * 24);
-      if (c.meeting_status !== 'completed' && daysDiff > 14) d.overdue++;
+      if (c.meeting_status !== 'completed' && daysSince(c.created_date) > OVERDUE_MEETING_DAYS) d.overdue++;
     });
-
     setDeptStats(Object.values(deptMap));
 
-    // Student-level monitoring alerts
     const alerts: any[] = [];
-    cases.forEach(c => {
-      const daysSince = (Date.now() - new Date(c.created_date).getTime()) / (1000 * 60 * 60 * 24);
+    cases.forEach((c) => {
+      const days = daysSince(c.created_date);
       const issues: string[] = [];
-
-      if (c.meeting_status !== 'completed' && daysSince > 14) issues.push('Meeting overdue');
-      if (c.meeting_status === 'completed' && !interventionSet.has(c.case_id)) issues.push('AIP not submitted');
+      if (c.meeting_status !== 'completed' && days > OVERDUE_MEETING_DAYS) issues.push('Meeting overdue');
+      if (c.meeting_status === 'completed' && !m.interventionSet.has(c.case_id)) issues.push('AIP not submitted');
       if (c.aip_status === 'completed' && c.midterm_review_status !== 'completed') issues.push('Midterm review pending');
-      if (c.aip_status === 'completed' && !followUpSet.has(c.case_id)) issues.push('Missing follow-up');
-
+      if (c.aip_status === 'completed' && !m.followUpSet.has(c.case_id)) issues.push('Missing follow-up');
       if (issues.length > 0) {
         alerts.push({
           student_name: c.student_name,
           student_id: c.student_id,
+          department: c.department,
+          campus: c.campus,
           advisor: c.assigned_advisor_name || 'Unassigned',
           issues,
         });
@@ -82,27 +71,35 @@ const DepartmentMonitoringPage = () => {
     });
     setStudentAlerts(alerts);
 
-    // Advisor performance (filtered for chairs)
     let filteredAdvisors = advisorUsers || [];
     if (user?.role === 'department_chair' && user.department) {
-      filteredAdvisors = filteredAdvisors.filter(a => a.department === user.department);
+      filteredAdvisors = filteredAdvisors.filter((a) => a.department === user.department);
+    } else if (scope.department !== 'all') {
+      filteredAdvisors = filteredAdvisors.filter((a) => a.department === scope.department);
     }
 
-    const perf = filteredAdvisors.map(a => {
-      const myCases = cases.filter(c => c.assigned_advisor === a.user_id);
+    setAdvisorPerf(filteredAdvisors.map((a) => {
+      const myCases = cases.filter((c) => c.assigned_advisor === a.user_id);
       return {
         name: a.full_name,
         assigned: myCases.length,
-        meetings: myCases.filter(c => c.meeting_status === 'completed').length,
-        aip: myCases.filter(c => interventionSet.has(c.case_id)).length,
-        midterm: myCases.filter(c => c.midterm_review_status === 'completed').length,
-        followUps: myCases.filter(c => followUpSet.has(c.case_id)).length,
+        meetings: myCases.filter((c) => c.meeting_status === 'completed').length,
+        aip: myCases.filter((c) => m.interventionSet.has(c.case_id)).length,
+        midterm: myCases.filter((c) => c.midterm_review_status === 'completed').length,
+        followUps: myCases.filter((c) => m.followUpSet.has(c.case_id)).length,
       };
-    });
-    setAdvisorPerf(perf);
-  };
+    }));
+  }, [user, scope]);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const isChair = user?.role === 'department_chair';
+
+  const drillDown = (dept: string) => {
+    if (isChair) return;
+    setDepartment(dept);
+    navigate('/dashboard');
+  };
 
   return (
     <AppLayout>
@@ -113,6 +110,7 @@ const DepartmentMonitoringPage = () => {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isChair ? 'Monitor your department risk cases and advisor performance' : 'Cross-department risk and compliance overview'}
+            {campus !== 'all' ? ` · ${campus} campus` : ''}
           </p>
         </div>
 
@@ -122,6 +120,58 @@ const DepartmentMonitoringPage = () => {
           <KpiCard title="Total Completed" value={deptStats.reduce((s, d) => s + d.completed, 0)} icon={CheckCircle} variant="success" />
           <KpiCard title="Total Overdue" value={deptStats.reduce((s, d) => s + d.overdue, 0)} icon={Clock} variant="destructive" />
         </div>
+
+        {/* Department table with drill-down */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-sans font-medium flex items-center gap-2">
+              <Building2 className="h-4 w-4" /> Departments
+              {!isChair && <span className="text-xs font-normal text-muted-foreground">(click a department to drill down)</span>}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Students</TableHead>
+                  <TableHead>At Risk</TableHead>
+                  <TableHead>Assigned</TableHead>
+                  <TableHead>Completed</TableHead>
+                  <TableHead>Overdue</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {deptStats.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      No department data for the current filters.
+                    </TableCell>
+                  </TableRow>
+                ) : deptStats.map((d) => (
+                  <TableRow
+                    key={d.name}
+                    className={isChair ? '' : 'cursor-pointer hover:bg-muted/50'}
+                    onClick={() => drillDown(d.name)}
+                  >
+                    <TableCell className="font-medium">
+                      {isChair ? d.name : (
+                        <span className="text-primary inline-flex items-center gap-1 hover:underline">
+                          {d.name} <ChevronRight className="h-3 w-3" />
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>{d.totalStudents}</TableCell>
+                    <TableCell>{d.total}</TableCell>
+                    <TableCell>{d.assigned}</TableCell>
+                    <TableCell>{d.completed}</TableCell>
+                    <TableCell>{d.overdue}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader><CardTitle className="text-base font-sans font-medium">Students at Risk per Department</CardTitle></CardHeader>
@@ -133,7 +183,7 @@ const DepartmentMonitoringPage = () => {
                 <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                 <Tooltip />
                 <Legend wrapperStyle={{ paddingTop: 10 }} />
-                <Bar dataKey="total" name="Total" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="total" name="Total" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} cursor={isChair ? 'default' : 'pointer'} onClick={(d: any) => d?.name && drillDown(d.name)} />
                 <Bar dataKey="assigned" name="Assigned" fill={CHART_COLORS[1]} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="completed" name="Completed" fill={CHART_COLORS[2]} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="overdue" name="Overdue" fill={CHART_COLORS[3]} radius={[4, 4, 0, 0]} />
@@ -216,6 +266,7 @@ const DepartmentMonitoringPage = () => {
                   <TableRow>
                     <TableHead>Student</TableHead>
                     <TableHead>ID</TableHead>
+                    <TableHead>Campus</TableHead>
                     <TableHead>Advisor</TableHead>
                     <TableHead>Alerts</TableHead>
                   </TableRow>
@@ -225,6 +276,7 @@ const DepartmentMonitoringPage = () => {
                     <TableRow key={i}>
                       <TableCell className="font-medium">{a.student_name}</TableCell>
                       <TableCell className="font-mono text-xs">{a.student_id}</TableCell>
+                      <TableCell>{a.campus}</TableCell>
                       <TableCell>{a.advisor}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">

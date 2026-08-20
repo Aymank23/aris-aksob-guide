@@ -1,19 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import KpiCard from '@/components/KpiCard';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/lib/supabase';
 import { CHART_COLORS } from '@/lib/constants';
+import { useAuth } from '@/contexts/AuthContext';
+import { useFilters } from '@/contexts/FilterContext';
+import { loadScopedData, computeMetrics, normalizeCampus } from '@/lib/analytics';
+import ResetSemesterDialog from '@/components/ResetSemesterDialog';
 import {
-  AlertTriangle, Users, CheckCircle, Clock,
-  FileText, TrendingUp, UserCheck, BookOpen, HeartPulse,
-  GraduationCap, Building2,
+  AlertTriangle, Users, CheckCircle, FileText, TrendingUp, UserCheck,
+  BookOpen, GraduationCap, Building2, MapPin, RotateCcw, ArrowLeft,
 } from 'lucide-react';
 import DashboardTour from '@/components/DashboardTour';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, FunnelChart, Funnel, LabelList,
+  ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 
 interface DeptKpi {
@@ -27,53 +31,32 @@ interface DeptKpi {
 }
 
 const DashboardPage = () => {
+  const { user } = useAuth();
+  const { scope, campus, department, setDepartment, clearDepartment } = useFilters();
+  const [resetOpen, setResetOpen] = useState(false);
   const [stats, setStats] = useState({
     totalFlagged: 0, categoryA: 0, categoryB: 0,
     advisorsAssigned: 0, meetingsCompleted: 0,
-    aipCompleted: 0, midtermReviews: 0, improved: 0, referralRate: 0,
+    aipCompleted: 0, midtermReviews: 0, improved: 0,
     totalStudents: 0, atRiskPct: 0,
   });
   const [deptData, setDeptData] = useState<{ name: string; count: number }[]>([]);
   const [statusData, setStatusData] = useState<{ name: string; value: number }[]>([]);
+  const [campusData, setCampusData] = useState<{ name: string; students: number; atRisk: number }[]>([]);
   const [funnelData, setFunnelData] = useState<{ name: string; value: number; fill: string }[]>([]);
   const [deptKpis, setDeptKpis] = useState<DeptKpi[]>([]);
 
-  useEffect(() => { loadDashboardData(); }, []);
-
-  const loadDashboardData = async () => {
-    const [{ data: cases }, { data: outcomes }, { data: students }, { data: followUps }] = await Promise.all([
-      supabase.from('risk_cases').select('*'),
-      supabase.from('outcomes').select('*'),
-      supabase.from('students').select('*'),
-      supabase.from('follow_ups').select('case_id'),
-    ]);
-
-    if (!cases) return;
-
-    const totalStudents = students?.length || 0;
-    const total = cases.length;
-    const catA = cases.filter((c) => c.risk_category === 'Category A').length;
-    const catB = cases.filter((c) => c.risk_category === 'Category B').length;
-    const assigned = cases.filter((c) => c.assigned_advisor).length;
-    const meetingsDone = cases.filter((c) => c.meeting_status === 'completed').length;
-    const aipDone = cases.filter((c) => c.aip_status === 'completed').length;
-    const midtermDone = cases.filter((c) => c.midterm_review_status === 'completed').length;
-    const improvedCount = outcomes?.filter((o) => o.final_outcome === 'improved_above_threshold').length || 0;
-
-    // Cases with at least one follow-up
-    const followUpCaseIds = new Set(followUps?.map(f => f.case_id) || []);
-    const followUpDone = cases.filter(c => followUpCaseIds.has(c.case_id)).length;
-    const caseClosed = cases.filter(c => c.outcome_status === 'completed').length;
-
-    const pct = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0;
+  const loadDashboardData = useCallback(async () => {
+    const data = await loadScopedData(user, scope);
+    const m = computeMetrics(data);
+    const { cases, students } = data;
 
     setStats({
-      totalFlagged: total, categoryA: catA, categoryB: catB,
-      advisorsAssigned: pct(assigned), meetingsCompleted: pct(meetingsDone),
-      aipCompleted: pct(aipDone), midtermReviews: pct(midtermDone),
-      improved: pct(improvedCount), referralRate: 0,
-      totalStudents,
-      atRiskPct: totalStudents > 0 ? Math.round((total / totalStudents) * 100) : 0,
+      totalFlagged: m.total, categoryA: m.catA, categoryB: m.catB,
+      advisorsAssigned: m.pct(m.assigned), meetingsCompleted: m.pct(m.meetingsDone),
+      aipCompleted: m.pct(m.aipDone), midtermReviews: m.pct(m.midtermDone),
+      improved: m.pct(m.improved),
+      totalStudents: m.totalStudents, atRiskPct: m.atRiskPct,
     });
 
     const deptMap: Record<string, number> = {};
@@ -83,54 +66,88 @@ const DashboardPage = () => {
     setStatusData([
       { name: 'Pending', value: cases.filter((c) => !c.assigned_advisor).length },
       { name: 'In Progress', value: cases.filter((c) => c.assigned_advisor && c.outcome_status !== 'completed').length },
-      { name: 'Completed', value: cases.filter((c) => c.outcome_status === 'completed').length },
+      { name: 'Completed', value: m.caseClosed },
     ]);
 
-    // Compliance funnel
+    // Campus breakdown
+    const campusMap: Record<string, { students: number; atRisk: number }> = {};
+    students.forEach((s: any) => {
+      const key = normalizeCampus(s.campus);
+      campusMap[key] = campusMap[key] || { students: 0, atRisk: 0 };
+      campusMap[key].students++;
+    });
+    cases.forEach((c: any) => {
+      const key = normalizeCampus(c.campus);
+      campusMap[key] = campusMap[key] || { students: 0, atRisk: 0 };
+      campusMap[key].atRisk++;
+    });
+    setCampusData(Object.entries(campusMap).map(([name, v]) => ({ name, ...v })));
+
     setFunnelData([
-      { name: 'At-Risk Identified', value: total, fill: CHART_COLORS[0] },
-      { name: 'Advisor Assigned', value: assigned, fill: CHART_COLORS[1] },
-      { name: 'Meeting Conducted', value: meetingsDone, fill: CHART_COLORS[2] },
-      { name: 'AIP Submitted', value: aipDone, fill: CHART_COLORS[3] },
-      { name: 'Follow-Up Done', value: followUpDone, fill: CHART_COLORS[4] },
-      { name: 'Case Closed', value: caseClosed, fill: CHART_COLORS[0] },
+      { name: 'At-Risk Identified', value: m.total, fill: CHART_COLORS[0] },
+      { name: 'Advisor Assigned', value: m.assigned, fill: CHART_COLORS[1] },
+      { name: 'Meeting Conducted', value: m.meetingsDone, fill: CHART_COLORS[2] },
+      { name: 'AIP Submitted', value: m.aipDone, fill: CHART_COLORS[3] },
+      { name: 'Follow-Up Done', value: m.followUpDone, fill: CHART_COLORS[4] },
+      { name: 'Case Closed', value: m.caseClosed, fill: CHART_COLORS[0] },
     ]);
 
-    // Department KPIs
     const deptStudentMap: Record<string, number> = {};
-    students?.forEach((s: any) => {
+    students.forEach((s: any) => {
       deptStudentMap[s.department] = (deptStudentMap[s.department] || 0) + 1;
     });
 
     const allDepts = new Set([...Object.keys(deptMap), ...Object.keys(deptStudentMap)]);
-    const kpis: DeptKpi[] = Array.from(allDepts).map(dept => {
-      const deptCases = cases.filter(c => c.department === dept);
+    setDeptKpis(Array.from(allDepts).map((dept) => {
+      const deptCases = cases.filter((c) => c.department === dept);
       const ts = deptStudentMap[dept] || 0;
-      const ar = deptCases.length;
-      const ca = deptCases.filter(c => c.risk_category === 'Category A').length;
-      const cb = deptCases.filter(c => c.risk_category === 'Category B').length;
+      const ca = deptCases.filter((c) => c.risk_category === 'Category A').length;
+      const cb = deptCases.filter((c) => c.risk_category === 'Category B').length;
       return {
         name: dept,
         totalStudents: ts,
-        atRisk: ar,
+        atRisk: deptCases.length,
         catA: ca,
         catB: cb,
         catAPct: ts > 0 ? `${Math.round((ca / ts) * 100)}%` : '—',
         catBPct: ts > 0 ? `${Math.round((cb / ts) * 100)}%` : '—',
       };
-    });
-    setDeptKpis(kpis);
-  };
+    }));
+  }, [user, scope]);
+
+  useEffect(() => { loadDashboardData(); }, [loadDashboardData]);
+
+  const isChair = user?.role === 'department_chair';
+  const scopeLabel = [
+    department !== 'all' ? department : null,
+    campus !== 'all' ? campus : null,
+  ].filter(Boolean).join(' · ');
 
   return (
     <AppLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-serif font-semibold text-foreground">Executive ARIP Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-1">Real-time academic risk intervention overview</p>
+            <h1 className="text-2xl font-serif font-semibold text-foreground">
+              {department !== 'all' ? `${department} — Department Dashboard` : 'Executive ARIP Dashboard'}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Real-time academic risk intervention overview{scopeLabel ? ` · ${scopeLabel}` : ''}
+            </p>
           </div>
-          <DashboardTour />
+          <div className="flex items-center gap-2">
+            {department !== 'all' && !isChair && (
+              <Button variant="outline" size="sm" onClick={clearDepartment}>
+                <ArrowLeft className="h-4 w-4 mr-2" /> All Departments
+              </Button>
+            )}
+            <DashboardTour />
+            {user?.role === 'admin' && (
+              <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
+                <RotateCcw className="h-4 w-4 mr-2" /> Reset Semester Data
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* School-Level KPIs */}
@@ -194,7 +211,13 @@ const DashboardPage = () => {
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-35} textAnchor="end" interval={0} height={60} />
                   <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
                   <Tooltip />
-                  <Bar dataKey="count" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} />
+                  <Bar
+                    dataKey="count"
+                    fill={CHART_COLORS[0]}
+                    radius={[4, 4, 0, 0]}
+                    cursor={isChair ? 'default' : 'pointer'}
+                    onClick={(d: any) => { if (!isChair && d?.name) setDepartment(d.name); }}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -228,6 +251,28 @@ const DashboardPage = () => {
           </Card>
         </div>
 
+        {/* Campus comparison */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-sans font-medium flex items-center gap-2">
+              <MapPin className="h-4 w-4" /> Campus Comparison
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={campusData} margin={{ bottom: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} height={40} />
+                <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                <Tooltip />
+                <Legend wrapperStyle={{ paddingTop: 10 }} />
+                <Bar dataKey="students" name="Students" fill={CHART_COLORS[1]} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="atRisk" name="At Risk" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
         {/* Department KPI Table */}
         <Card>
           <CardHeader>
@@ -249,9 +294,24 @@ const DashboardPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {deptKpis.map((d) => (
+                {deptKpis.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No data for the current filters.
+                    </TableCell>
+                  </TableRow>
+                ) : deptKpis.map((d) => (
                   <TableRow key={d.name}>
-                    <TableCell className="font-medium">{d.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {isChair ? d.name : (
+                        <button
+                          className="text-primary hover:underline font-medium"
+                          onClick={() => setDepartment(d.name)}
+                        >
+                          {d.name}
+                        </button>
+                      )}
+                    </TableCell>
                     <TableCell>{d.totalStudents}</TableCell>
                     <TableCell>{d.atRisk}</TableCell>
                     <TableCell>{d.catA}</TableCell>
@@ -264,6 +324,8 @@ const DashboardPage = () => {
             </Table>
           </CardContent>
         </Card>
+
+        <ResetSemesterDialog open={resetOpen} onOpenChange={setResetOpen} onReset={loadDashboardData} />
       </div>
     </AppLayout>
   );

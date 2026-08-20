@@ -42,6 +42,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+         <FilterProvider>
           <Routes>
             <Route path="/" element={<AuthRedirect />} />
             <Route path="/login" element={<LoginPage />} />
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/guide" element={<ProtectedRoute allowedRoles={['admin']}><GuidePage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+         </FilterProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
