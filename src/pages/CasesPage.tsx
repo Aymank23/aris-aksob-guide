@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFilters } from '@/contexts/FilterContext';
+import { loadScopedData } from '@/lib/analytics';
 import { Search, Download, Eye, UserPlus, Plus, Pencil, Upload, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CreateCaseDialog from '@/components/CreateCaseDialog';
@@ -21,6 +22,7 @@ interface RiskCase {
   student_id: string;
   student_name: string;
   department: string;
+  campus: string;
   risk_category: string;
   assigned_advisor: string | null;
   assigned_advisor_name: string | null;
