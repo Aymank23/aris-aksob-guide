@@ -57,6 +57,7 @@ const App = () => (
             <Route path="/guide" element={<ProtectedRoute allowedRoles={['admin']}><GuidePage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+         </FilterProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
