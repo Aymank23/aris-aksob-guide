@@ -70,7 +70,9 @@ const AdvisorWorkloadPage = () => {
       assigned: assignedCases,
       unassigned: totalCases - assignedCases,
     });
-  };
+  }, [user, scope]);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const totalAssigned = advisors.reduce((s, a) => s + a.assigned, 0);
   const totalPending = advisors.reduce((s, a) => s + a.pending, 0);
@@ -91,6 +93,7 @@ const AdvisorWorkloadPage = () => {
               {isDeptChair
                 ? `Monitor advisor assignments within ${user?.department}`
                 : 'Monitor advisor assignments and case completion'}
+              {campus !== 'all' ? ` · ${campus} campus` : ''}
             </p>
           </div>
           <AdvisorWorkloadTour />
