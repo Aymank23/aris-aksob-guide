@@ -91,7 +91,7 @@ const CompliancePage = () => {
               <TableBody>
                 {alerts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No compliance alerts</TableCell>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No compliance alerts</TableCell>
                   </TableRow>
                 ) : (
                   alerts.map((a, i) => (
@@ -103,6 +103,7 @@ const CompliancePage = () => {
                       </TableCell>
                       <TableCell className="font-medium">{a.type}</TableCell>
                       <TableCell>{a.student_name}</TableCell>
+                      <TableCell>{a.campus}</TableCell>
                       <TableCell className="text-muted-foreground">{a.message}</TableCell>
                     </TableRow>
                   ))
