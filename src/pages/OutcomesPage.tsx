@@ -37,7 +37,9 @@ const OutcomesPage = () => {
       { name: 'Declined', value: declined },
       { name: 'Withdrew', value: withdrew },
     ]);
-  };
+  }, [user, scope]);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const rate = (n: number) => totals.total > 0 ? `${Math.round((n / totals.total) * 100)}%` : '0%';
 
@@ -46,7 +48,9 @@ const OutcomesPage = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-serif font-semibold text-foreground">Outcomes Analytics</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track intervention effectiveness and student outcomes</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Track intervention effectiveness and student outcomes{campus !== 'all' ? ` · ${campus} campus` : ''}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
