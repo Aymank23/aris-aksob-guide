@@ -1,37 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AppLayout from '@/components/AppLayout';
 import KpiCard from '@/components/KpiCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFilters } from '@/contexts/FilterContext';
+import { loadScopedData } from '@/lib/analytics';
 import { CHART_COLORS } from '@/lib/constants';
 import { TrendingUp, TrendingDown, ArrowRight, XCircle } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 const OutcomesPage = () => {
   const { user } = useAuth();
+  const { scope, campus } = useFilters();
   const [outcomeStats, setOutcomeStats] = useState<{ name: string; value: number }[]>([]);
   const [totals, setTotals] = useState({ improved: 0, stillAtRisk: 0, declined: 0, withdrew: 0, total: 0 });
 
-  useEffect(() => { loadData(); }, []);
+  const loadData = useCallback(async () => {
+    const { outcomes } = await loadScopedData(user, scope);
 
-  const loadData = async () => {
-    // Get cases scoped to user's role
-    let caseQuery = supabase.from('risk_cases').select('case_id');
-    if (user?.role === 'department_chair' && user.department) {
-      caseQuery = caseQuery.eq('department', user.department);
-    }
-    const { data: cases } = await caseQuery;
-    const caseIds = cases?.map(c => c.case_id) || [];
-
-    if (caseIds.length === 0) {
+    if (outcomes.length === 0) {
       setTotals({ improved: 0, stillAtRisk: 0, declined: 0, withdrew: 0, total: 0 });
       setOutcomeStats([]);
       return;
     }
-
-    const { data: outcomes } = await supabase.from('outcomes').select('*').in('case_id', caseIds);
-    if (!outcomes) return;
 
     const total = outcomes.length;
     const improved = outcomes.filter((o) => o.final_outcome === 'improved_above_threshold').length;
