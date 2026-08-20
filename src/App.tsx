@@ -42,6 +42,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+         <FilterProvider>
           <Routes>
             <Route path="/" element={<AuthRedirect />} />
             <Route path="/login" element={<LoginPage />} />
