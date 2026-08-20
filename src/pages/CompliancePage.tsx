@@ -63,7 +63,9 @@ const CompliancePage = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-serif font-semibold text-foreground">Compliance Tracking</h1>
-          <p className="text-sm text-muted-foreground mt-1">Monitor intervention compliance and overdue actions</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Monitor intervention compliance and overdue actions{campus !== 'all' ? ` · ${campus} campus` : ''}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -82,6 +84,7 @@ const CompliancePage = () => {
                   <TableHead>Severity</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Student</TableHead>
+                  <TableHead>Campus</TableHead>
                   <TableHead>Details</TableHead>
                 </TableRow>
               </TableHeader>
