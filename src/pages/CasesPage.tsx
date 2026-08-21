@@ -88,9 +88,9 @@ const CasesPage = () => {
   const departments = departmentOptions;
 
   const exportCSV = () => {
-    const headers = ['Student ID', 'Name', 'Department', 'Risk Category', 'Advisor', 'Meeting', 'AIP', 'Midterm', 'Outcome'];
+    const headers = ['Student ID', 'Name', 'Department', 'Campus', 'Risk Category', 'Advisor', 'Meeting', 'AIP', 'Midterm', 'Outcome'];
     const rows = filtered.map((c) => [
-      c.student_id, c.student_name, c.department, c.risk_category,
+      c.student_id, c.student_name, c.department, c.campus, c.risk_category,
       c.assigned_advisor_name || 'Unassigned', c.meeting_status, c.aip_status,
       c.midterm_review_status, c.outcome_status,
     ]);
