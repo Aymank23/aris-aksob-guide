@@ -65,30 +65,27 @@ const CasesPage = () => {
     advisorName: string | null;
   } | null>(null);
 
-  useEffect(() => { loadCases(); }, []);
+  const loadCases = useCallback(async () => {
+    const { cases: scoped } = await loadScopedData(user, scope);
+    setCases(
+      [...scoped].sort(
+        (a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime(),
+      ) as RiskCase[],
+    );
+    refreshOptions();
+  }, [user, scope, refreshOptions]);
 
-  const loadCases = async () => {
-    let query = supabase.from('risk_cases').select('*');
-    if (user?.role === 'department_chair' && user.department) {
-      query = query.eq('department', user.department);
-    }
-    if (user?.role === 'advisor') {
-      query = query.eq('assigned_advisor', user.id);
-    }
-    const { data } = await query.order('created_date', { ascending: false });
-    setCases(data || []);
-  };
+  useEffect(() => { loadCases(); }, [loadCases]);
 
   const filtered = cases.filter((c) => {
     const matchSearch =
       c.student_name?.toLowerCase().includes(search.toLowerCase()) ||
       c.student_id?.toLowerCase().includes(search.toLowerCase());
-    const matchDept = filterDept === 'all' || c.department === filterDept;
     const matchCat = filterCategory === 'all' || c.risk_category === filterCategory;
-    return matchSearch && matchDept && matchCat;
+    return matchSearch && matchCat;
   });
 
-  const departments = [...new Set(cases.map((c) => c.department))];
+  const departments = departmentOptions;
 
   const exportCSV = () => {
     const headers = ['Student ID', 'Name', 'Department', 'Risk Category', 'Advisor', 'Meeting', 'AIP', 'Midterm', 'Outcome'];
