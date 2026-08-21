@@ -196,7 +196,7 @@ const CasesPage = () => {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">
                       No intervention cases available. Cases will appear here once flagged students are added.
                     </TableCell>
                   </TableRow>
@@ -206,6 +206,7 @@ const CasesPage = () => {
                       <TableCell className="font-mono text-xs">{c.student_id}</TableCell>
                       <TableCell className="font-medium">{c.student_name}</TableCell>
                       <TableCell>{c.department}</TableCell>
+                      <TableCell>{c.campus}</TableCell>
                       <TableCell>
                         <Badge variant={c.risk_category === 'Category A' ? 'destructive' : 'secondary'} className="text-xs">
                           {c.risk_category}
