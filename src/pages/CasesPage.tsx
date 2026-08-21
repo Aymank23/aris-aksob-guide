@@ -46,9 +46,9 @@ const statusBadge = (status: string) => {
 const CasesPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { scope, campus, department: filterDept, setDepartment: setFilterDept, departmentOptions, refreshOptions } = useFilters();
   const [cases, setCases] = useState<RiskCase[]>([]);
   const [search, setSearch] = useState('');
-  const [filterDept, setFilterDept] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
