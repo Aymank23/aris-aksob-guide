@@ -32,17 +32,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored session
+    // Restore the stored session, then ALWAYS revalidate it against the
+    // backend. Without this, a profile cached at first login (role,
+    // department, status) stays frozen forever, so users keep seeing the
+    // permissions/behaviour of the version they signed in on.
     const stored = localStorage.getItem('arip_user');
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {
-        localStorage.removeItem('arip_user');
-      }
+    if (!stored) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    let cached: AuthUser | null = null;
+    try {
+      cached = JSON.parse(stored);
+      setUser(cached);
+    } catch {
+      localStorage.removeItem('arip_user');
+      setLoading(false);
+      return;
+    }
+
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('app_users')
+          .select('*')
+          .eq('user_id', cached!.id)
+          .maybeSingle();
+
+        if (!data || data.status !== 'active') {
+          // Deleted or deactivated account: end the stale session.
+          setUser(null);
+          localStorage.removeItem('arip_user');
+        } else {
+          const fresh: AuthUser = {
+            id: data.user_id,
+            username: data.username,
+            full_name: data.full_name,
+            role: data.role as UserRole,
+            department: data.department,
+            must_change_password: data.must_change_password,
+          };
+          setUser(fresh);
+          localStorage.setItem('arip_user', JSON.stringify(fresh));
+        }
+      } catch {
+        // Network failure: keep the cached session rather than locking out.
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
+
 
   const login = async (username: string, password: string): Promise<{ error?: string }> => {
     try {
