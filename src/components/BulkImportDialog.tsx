@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { normalizeCampus, normalizeText } from '@/lib/analytics';
 
 interface BulkImportDialogProps {
   open: boolean;
@@ -94,14 +95,16 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
         const parsed: ImportRow[] = json.map((row) => {
           const sid = String(row[headerMap['student_id']] || '').trim();
           const sname = String(row[headerMap['student_name']] || '').trim();
-          const dept = String(row[headerMap['department']] || '').trim();
-          const camp = String(row[headerMap['campus']] || '').trim();
+          const dept = normalizeText(String(row[headerMap['department']] || ''));
+          const rawCampus = String(row[headerMap['campus']] || '').trim();
+          const camp = rawCampus ? normalizeCampus(rawCampus) : '';
           const cat = String(row[headerMap['risk_category']] || '').trim();
           const mjr = String(row[headerMap['major']] || '').trim();
           const semail = String(row[headerMap['student_email']] || '').trim();
           const sphone = String(row[headerMap['student_phone']] || '').trim();
           const scgpa = String(row[headerMap['cgpa']] || '').trim();
-          const scredits = String(row[headerMap['credits_completed']] || headerMap['credits'] ? row[headerMap['credits']] || '' : '').trim();
+          const creditsKey = headerMap['credits_completed'] || headerMap['credits'];
+          const scredits = String((creditsKey ? row[creditsKey] : '') || '').trim();
           const sterm = String(row[headerMap['term_semester']] || '').trim();
           const sfaid = String(row[headerMap['financial_aid']] || '').trim();
 

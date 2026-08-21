@@ -46,9 +46,9 @@ const statusBadge = (status: string) => {
 const CasesPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { scope, campus, department: filterDept, setDepartment: setFilterDept, departmentOptions, refreshOptions } = useFilters();
   const [cases, setCases] = useState<RiskCase[]>([]);
   const [search, setSearch] = useState('');
-  const [filterDept, setFilterDept] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -65,35 +65,32 @@ const CasesPage = () => {
     advisorName: string | null;
   } | null>(null);
 
-  useEffect(() => { loadCases(); }, []);
+  const loadCases = useCallback(async () => {
+    const { cases: scoped } = await loadScopedData(user, scope);
+    setCases(
+      [...scoped].sort(
+        (a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime(),
+      ) as RiskCase[],
+    );
+    refreshOptions();
+  }, [user, scope, refreshOptions]);
 
-  const loadCases = async () => {
-    let query = supabase.from('risk_cases').select('*');
-    if (user?.role === 'department_chair' && user.department) {
-      query = query.eq('department', user.department);
-    }
-    if (user?.role === 'advisor') {
-      query = query.eq('assigned_advisor', user.id);
-    }
-    const { data } = await query.order('created_date', { ascending: false });
-    setCases(data || []);
-  };
+  useEffect(() => { loadCases(); }, [loadCases]);
 
   const filtered = cases.filter((c) => {
     const matchSearch =
       c.student_name?.toLowerCase().includes(search.toLowerCase()) ||
       c.student_id?.toLowerCase().includes(search.toLowerCase());
-    const matchDept = filterDept === 'all' || c.department === filterDept;
     const matchCat = filterCategory === 'all' || c.risk_category === filterCategory;
-    return matchSearch && matchDept && matchCat;
+    return matchSearch && matchCat;
   });
 
-  const departments = [...new Set(cases.map((c) => c.department))];
+  const departments = departmentOptions;
 
   const exportCSV = () => {
-    const headers = ['Student ID', 'Name', 'Department', 'Risk Category', 'Advisor', 'Meeting', 'AIP', 'Midterm', 'Outcome'];
+    const headers = ['Student ID', 'Name', 'Department', 'Campus', 'Risk Category', 'Advisor', 'Meeting', 'AIP', 'Midterm', 'Outcome'];
     const rows = filtered.map((c) => [
-      c.student_id, c.student_name, c.department, c.risk_category,
+      c.student_id, c.student_name, c.department, c.campus, c.risk_category,
       c.assigned_advisor_name || 'Unassigned', c.meeting_status, c.aip_status,
       c.midterm_review_status, c.outcome_status,
     ]);
@@ -114,7 +111,9 @@ const CasesPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-serif font-semibold text-foreground">Intervention Cases</h1>
-            <p className="text-sm text-muted-foreground mt-1">Manage and track all academic risk intervention cases</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Manage and track all academic risk intervention cases{campus !== 'all' ? ` · ${campus} campus` : ''}
+            </p>
           </div>
           <div data-tour="cases-actions" className="flex gap-2">
             <CasesTour />
@@ -150,7 +149,7 @@ const CasesPage = () => {
                   className="pl-9"
                 />
               </div>
-              <Select value={filterDept} onValueChange={setFilterDept}>
+              <Select value={filterDept} onValueChange={setFilterDept} disabled={user?.role === 'department_chair'}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Department" />
                 </SelectTrigger>
@@ -184,6 +183,7 @@ const CasesPage = () => {
                   <TableHead>Student ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Department</TableHead>
+                  <TableHead>Campus</TableHead>
                   <TableHead>Risk Category</TableHead>
                   <TableHead>Advisor</TableHead>
                   <TableHead>Meeting</TableHead>
@@ -196,7 +196,7 @@ const CasesPage = () => {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={11} className="text-center py-12 text-muted-foreground">
                       No intervention cases available. Cases will appear here once flagged students are added.
                     </TableCell>
                   </TableRow>
@@ -206,6 +206,7 @@ const CasesPage = () => {
                       <TableCell className="font-mono text-xs">{c.student_id}</TableCell>
                       <TableCell className="font-medium">{c.student_name}</TableCell>
                       <TableCell>{c.department}</TableCell>
+                      <TableCell>{c.campus}</TableCell>
                       <TableCell>
                         <Badge variant={c.risk_category === 'Category A' ? 'destructive' : 'secondary'} className="text-xs">
                           {c.risk_category}
