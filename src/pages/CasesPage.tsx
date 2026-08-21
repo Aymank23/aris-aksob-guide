@@ -111,7 +111,9 @@ const CasesPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-serif font-semibold text-foreground">Intervention Cases</h1>
-            <p className="text-sm text-muted-foreground mt-1">Manage and track all academic risk intervention cases</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Manage and track all academic risk intervention cases{campus !== 'all' ? ` · ${campus} campus` : ''}
+            </p>
           </div>
           <div data-tour="cases-actions" className="flex gap-2">
             <CasesTour />
@@ -147,7 +149,7 @@ const CasesPage = () => {
                   className="pl-9"
                 />
               </div>
-              <Select value={filterDept} onValueChange={setFilterDept}>
+              <Select value={filterDept} onValueChange={setFilterDept} disabled={user?.role === 'department_chair'}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Department" />
                 </SelectTrigger>
@@ -181,6 +183,7 @@ const CasesPage = () => {
                   <TableHead>Student ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Department</TableHead>
+                  <TableHead>Campus</TableHead>
                   <TableHead>Risk Category</TableHead>
                   <TableHead>Advisor</TableHead>
                   <TableHead>Meeting</TableHead>
