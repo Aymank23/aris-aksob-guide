@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { normalizeCampus, normalizeText } from '@/lib/analytics';
 
 interface BulkImportDialogProps {
   open: boolean;
@@ -95,7 +96,8 @@ const BulkImportDialog = ({ open, onOpenChange, onImported }: BulkImportDialogPr
           const sid = String(row[headerMap['student_id']] || '').trim();
           const sname = String(row[headerMap['student_name']] || '').trim();
           const dept = String(row[headerMap['department']] || '').trim();
-          const camp = String(row[headerMap['campus']] || '').trim();
+          const rawCampus = String(row[headerMap['campus']] || '').trim();
+          const camp = rawCampus ? normalizeCampus(rawCampus) : '';
           const cat = String(row[headerMap['risk_category']] || '').trim();
           const mjr = String(row[headerMap['major']] || '').trim();
           const semail = String(row[headerMap['student_email']] || '').trim();
